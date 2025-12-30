@@ -171,8 +171,22 @@ def format_results_html(result: dict) -> str:
     if not result.get('success'):
         error = result.get('error', 'Unknown error occurred')
         return f"""
-        <div class="status-error">
-            <strong>Error:</strong> {error}
+        <div class="status-error" style="padding: 2rem; border-radius: 12px; background: #fef2f2; border: 2px solid #fecaca; color: #991b1b;">
+            <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #dc2626;">
+                Unable to Analyze Image
+            </div>
+            <div style="font-size: 1rem; line-height: 1.6; color: #7f1d1d;">
+                {error}
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #fecaca; font-size: 0.95rem; color: #991b1b;">
+                <strong>Tips for better results:</strong>
+                <ul style="margin: 0.75rem 0 0 1.5rem; line-height: 1.8;">
+                    <li>Use clear, well-lit images</li>
+                    <li>Ensure clothing items are clearly visible</li>
+                    <li>Full-body or upper-body photos work best</li>
+                    <li>Avoid images where the person is too far from the camera</li>
+                </ul>
+            </div>
         </div>
         """
     

@@ -69,7 +69,11 @@ class FashionAnalyzer:
             search_queries = self.vlm_service.get_search_queries(fashion_data)
             
             if not search_queries:
-                result['error'] = "Could not generate search queries from analysis."
+                result['error'] = (
+                    "No specific clothing items or colors were detected in the image. "
+                    "Please upload a clearer, closer-to-the-camera image where the clothing items are more visible. "
+                    "Full-body or upper-body photos with good lighting work best."
+                )
                 return result
             
             print(f"Generated {len(search_queries)} search queries: {search_queries}")

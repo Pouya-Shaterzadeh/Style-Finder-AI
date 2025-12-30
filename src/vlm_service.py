@@ -835,18 +835,8 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                             "features": [],
                             "description": caption
                         })
-                    # Only if absolutely nothing detected, use outfit (will be filtered out later)
-                    elif not result["items"]:
-                        result["items"].append({
-                            "type": "outfit",
-                            "color": detected_colors[0] if detected_colors else "unknown",
-                            "pattern": "unknown",
-                            "style": "casual",
-                            "material": "unknown",
-                            "features": [],
-                            "description": caption,
-                            "is_generic": True  # Mark as generic for filtering
-                        })
+                    # If no specific items detected, leave items list empty
+                    # This will trigger a helpful error message to the user
         
         # Determine overall style based on items and caption
         if any(item["type"] in ["suit", "blazer", "dress"] for item in result["items"]):
@@ -968,22 +958,5 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         
         # Remove duplicates and return
         unique_queries = list(set(queries))[:10]  # Allow up to 10 unique item queries
-        
-        # If no valid queries after filtering, try to create at least one from detected colors/gender
-        if not unique_queries and items:
-            # Try to infer a basic query from available data
-            gender = fashion_data.get("gender", "unknown")
-            detected_colors = []
-            for item in items:
-                color = item.get("color", "")
-                if color and color != "unknown":
-                    detected_colors.append(color)
-            
-            if gender != "unknown" and detected_colors:
-                # Create a basic query with gender + first color + "clothing"
-                # This is better than "outfit"
-                basic_query = f"{gender} {detected_colors[0]}"
-                unique_queries.append(basic_query)
-                print(f"Created fallback query: {basic_query}")
         
         return unique_queries
