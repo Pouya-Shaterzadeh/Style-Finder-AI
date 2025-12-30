@@ -1,12 +1,3 @@
----
-title: Style Finder AI
-colorFrom: purple
-colorTo: pink
-sdk: docker
-pinned: false
-license: mit
----
-
 # Style Finder AI: Computer Vision-Based Fashion Analysis
 
 A sophisticated fashion analysis application that uses Vision Language Models (VLMs) to analyze fashion images and find matching products on Trendyol.com for the Turkish market.
