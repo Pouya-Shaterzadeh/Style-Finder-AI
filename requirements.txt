@@ -1,0 +1,35 @@
+# Core dependencies
+gradio>=4.0.0
+pillow>=10.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Vision Language Model - Using Hugging Face Inference API (no local download!)
+# transformers and torch only needed for CLIP visual similarity
+torch>=2.0.0
+transformers>=4.35.0
+
+# Image processing and similarity
+sentence-transformers>=2.2.0
+opencv-python>=4.8.0
+
+# Web scraping
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+lxml>=4.9.0
+selenium>=4.15.0
+
+# Vector search
+faiss-cpu>=1.7.4
+scikit-learn>=1.3.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+
+# Hugging Face deployment
+huggingface-hub>=0.19.0
+
+# Development tools
+watchdog>=3.0.0
+

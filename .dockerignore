@@ -1,0 +1,27 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv
+.git
+.gitignore
+# Keep README.md for Hugging Face Spaces
+# *.md
+DEPLOYMENT.md
+QUICK_DEPLOY.md
+README_DEV.md
+README_HF.md
+MODEL_AVAILABILITY_RESEARCH.md
+HF_INFERENCE_API.md
+QUICKSTART.md
+.DS_Store
+*.log
+.cache/
+models/
+checkpoints/
+*.pkl
+*.pickle
+
