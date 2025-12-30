@@ -67,20 +67,21 @@ def format_product_card(product: dict) -> str:
 
 def get_style_tips(overall_style: str, items: list) -> list:
     """
-    Generate style tips specific to the detected outfit and items
+    Generate professional, specific style tips based on detected outfit
     
     Args:
         overall_style: Overall style detected (e.g., 'casual', 'formal')
         items: List of detected clothing items with colors and types
         
     Returns:
-        List of style tip strings specific to the outfit
+        List of professional style tip strings
     """
     tips = []
     style_lower = overall_style.lower() if overall_style else ''
     
-    # Get specific item details
+    # Organize items by category
     item_details = {}
+    item_list = []
     for item in items:
         item_type = item.get('type', '').lower()
         item_color = item.get('color', '').lower()
@@ -88,74 +89,129 @@ def get_style_tips(overall_style: str, items: list) -> list:
             if item_type not in item_details:
                 item_details[item_type] = []
             item_details[item_type].append(item_color)
+            item_list.append({'type': item_type, 'color': item_color})
     
-    # Generate outfit-specific tips based on detected items
-    if items:
-        tips.append("<strong>Outfit-Specific Tips:</strong>")
-        
-        # Tips based on specific item combinations
-        has_top = any(t in item_details for t in ['sweater', 'shirt', 't-shirt', 'blouse', 'hoodie'])
-        has_bottom = any(t in item_details for t in ['pants', 'jeans', 'shorts', 'skirt'])
-        
-        if has_top and has_bottom:
-            top_item = next((t for t in ['sweater', 'shirt', 't-shirt', 'blouse', 'hoodie'] if t in item_details), None)
-            bottom_item = next((t for t in ['pants', 'jeans', 'shorts', 'skirt'] if t in item_details), None)
-            
-            if top_item and bottom_item:
-                top_colors = item_details[top_item]
-                bottom_colors = item_details[bottom_item]
-                
-                # Specific color combination tips
-                if 'black' in top_colors and 'blue' in bottom_colors:
-                    tips.append(f"• Your {top_item} and {bottom_item} create a classic contrast - add a neutral accessory")
-                elif 'blue' in top_colors and 'black' in bottom_colors:
-                    tips.append(f"• Your {top_item} and {bottom_item} create a classic contrast - add a neutral accessory")
-                elif any(c in ['black', 'white', 'gray'] for c in top_colors) and any(c in ['black', 'white', 'gray'] for c in bottom_colors):
-                    tips.append(f"• Monochromatic look - add a pop of color with accessories or shoes")
-                else:
-                    tips.append(f"• Your {top_item} and {bottom_item} combination works well - consider adding a complementary accessory")
-        
-        # Specific item tips based on what was detected
-        for item_type, colors in item_details.items():
-            color_str = colors[0] if colors and colors[0] != 'unknown' else ''
-            
-            if item_type == 'sweater':
-                if 'blue' in colors:
-                    tips.append(f"• Your blue sweater pairs well with neutral bottoms - try beige or white")
-                elif 'black' in colors:
-                    tips.append(f"• Your black sweater is versatile - layer with a white shirt underneath for a preppy look")
-                else:
-                    tips.append(f"• Sweaters are great for layering - add a collared shirt underneath for texture")
-            
-            elif item_type in ['pants', 'jeans']:
-                if 'blue' in colors:
-                    tips.append(f"• Blue {item_type} are a wardrobe staple - pair with any neutral top")
-                elif 'black' in colors:
-                    tips.append(f"• Black {item_type} elongate the silhouette - perfect for a polished look")
-                else:
-                    tips.append(f"• Your {color_str} {item_type} can be dressed up or down depending on footwear")
-            
-            elif item_type in ['shirt', 't-shirt', 'blouse']:
-                if 'white' in colors or 'black' in colors:
-                    tips.append(f"• Your {color_str} {item_type} is a versatile piece - works with any bottom")
-                else:
-                    tips.append(f"• Your {color_str} {item_type} adds personality - keep accessories minimal to let it shine")
+    if not items:
+        return tips
     
-    # Style-specific tips (only if relevant)
-    if 'casual' in style_lower and items:
+    tips.append("<strong>Professional Styling Advice:</strong>")
+    
+    # ===== COLOR THEORY & COMBINATIONS =====
+    detected_colors = [c for item in item_list for c in [item.get('color', '')] if c and c != 'unknown']
+    has_top = any(t in item_details for t in ['sweater', 'shirt', 't-shirt', 'blouse', 'hoodie', 'jacket', 'coat'])
+    has_bottom = any(t in item_details for t in ['pants', 'jeans', 'shorts', 'skirt'])
+    has_dress = 'dress' in item_details
+    
+    # Color combination analysis
+    if has_top and has_bottom:
+        top_colors = [c for t in ['sweater', 'shirt', 't-shirt', 'blouse', 'hoodie'] for c in item_details.get(t, [])]
+        bottom_colors = [c for t in ['pants', 'jeans', 'shorts', 'skirt'] for c in item_details.get(t, [])]
+        
+        # Classic black and white contrast
+        if ('black' in top_colors and 'white' in bottom_colors) or ('white' in top_colors and 'black' in bottom_colors):
+            tips.append("• <strong>Classic Contrast:</strong> The black and white combination is timeless. Elevate with metallic accessories (silver or gold) and ensure one piece has texture or pattern to add depth.")
+        
+        # Monochromatic (same color)
+        elif top_colors and bottom_colors and top_colors[0] == bottom_colors[0]:
+            tips.append(f"• <strong>Monochromatic Styling:</strong> Your {top_colors[0]} on {top_colors[0]} creates a streamlined look. Add dimension with different textures (e.g., silk top with wool pants) or a contrasting belt.")
+        
+        # Neutral monochromatic (all neutrals)
+        elif all(c in ['black', 'white', 'gray', 'grey'] for c in top_colors + bottom_colors):
+            tips.append("• <strong>Neutral Palette:</strong> Your neutral color scheme creates a sophisticated base. Add visual interest with a statement belt, colorful handbag, or patterned scarf to break up the monochrome.")
+        
+        # Color harmony advice
+        else:
+            tips.append("• <strong>Color Balance:</strong> Your color combination works well. Consider the 60-30-10 rule: let one color dominate (60%), another support (30%), and use the third for accents (10%).")
+    
+    # ===== SPECIFIC ITEM STYLING =====
+    
+    # Dress styling
+    if has_dress:
+        dress_color = item_details.get('dress', ['unknown'])[0]
+        if dress_color == 'white':
+            tips.append("• <strong>White Dress Styling:</strong> White dresses are versatile and elegant. For formal occasions, pair with nude or metallic heels and minimal jewelry. For daytime, add a denim jacket and sandals. Ensure proper undergarments for a seamless look.")
+        elif dress_color == 'black':
+            tips.append("• <strong>Black Dress Styling:</strong> The classic LBD is a wardrobe essential. Elevate with statement jewelry, a bold lip, or colorful accessories. A wide belt can define the waist, and different shoe styles transform the look from day to night.")
+        elif dress_color in ['red', 'blue', 'green']:
+            tips.append(f"• <strong>Bold Color Dress:</strong> Your {dress_color} dress makes a statement. Keep accessories neutral (nude, black, or white) to let the color shine. Consider a structured blazer or cardigan for layering.")
+        else:
+            tips.append("• <strong>Dress Styling:</strong> Ensure the dress fits well at the shoulders, bust, and waist. The hemline should hit at a flattering point on your leg. Add a belt to define your waist, and choose shoes that complement the dress length.")
+    
+    # Top styling
+    if has_top:
+        top_types = [t for t in ['sweater', 'shirt', 't-shirt', 'blouse', 'hoodie'] if t in item_details]
+        if top_types:
+            top_type = top_types[0]
+            top_color = item_details[top_type][0] if item_details[top_type] else 'unknown'
+            
+            if top_type == 'sweater':
+                if top_color == 'black':
+                    tips.append("• <strong>Black Sweater Styling:</strong> Layer a crisp white collared shirt underneath for a preppy, polished look. Add a statement necklace or scarf for texture. Perfect for both office and casual settings.")
+                elif top_color == 'blue':
+                    tips.append("• <strong>Blue Sweater Styling:</strong> Navy or blue sweaters pair beautifully with beige, white, or gray bottoms. Add a silk scarf or delicate pendant necklace. Consider a blazer for a more structured silhouette.")
+                else:
+                    tips.append("• <strong>Sweater Styling:</strong> Sweaters benefit from layering. Add a collared shirt or turtleneck underneath for texture. A statement belt over the sweater can create definition. Choose bottoms that contrast in texture (e.g., silk with wool).")
+            
+            elif top_type in ['shirt', 'blouse']:
+                if top_color in ['white', 'black']:
+                    tips.append(f"• <strong>{top_color.title()} {top_type.title()} Styling:</strong> This versatile piece works with any bottom. For a professional look, tuck it in and add a belt. Roll up sleeves for a more relaxed vibe. Consider a blazer or cardigan for layering.")
+                else:
+                    tips.append(f"• <strong>{top_color.title()} {top_type.title()} Styling:</strong> Your colored {top_type} adds personality. Keep accessories minimal—a simple watch or delicate necklace. Pair with neutral bottoms to let the color be the focal point.")
+            
+            elif top_type == 't-shirt':
+                tips.append("• <strong>T-Shirt Styling:</strong> Elevate a basic tee by tucking it in, adding a statement belt, or layering with a blazer or cardigan. Choose a well-fitted style that skims the body without being too tight.")
+    
+    # Bottom styling
+    if has_bottom:
+        bottom_types = [t for t in ['pants', 'jeans', 'shorts', 'skirt'] if t in item_details]
+        if bottom_types:
+            bottom_type = bottom_types[0]
+            bottom_color = item_details[bottom_type][0] if item_details[bottom_type] else 'unknown'
+            
+            if bottom_type == 'jeans':
+                tips.append("• <strong>Jeans Styling:</strong> Ensure jeans fit well at the waist and hips. The length should hit just above the ankle or be cuffed. Pair with heels for a dressier look or sneakers for casual. A belt can add polish.")
+            elif bottom_type == 'pants':
+                if bottom_color == 'black':
+                    tips.append("• <strong>Black Pants Styling:</strong> Black pants elongate the silhouette and are incredibly versatile. Ensure they're well-tailored—consider hemming for the perfect length. Pair with any top and add a statement belt or shoes.")
+                else:
+                    tips.append(f"• <strong>{bottom_color.title()} Pants Styling:</strong> Ensure proper fit at the waist and through the hips. The hem should break slightly on your shoes. Consider a monochromatic look with a matching top, or contrast with a neutral color.")
+            elif bottom_type == 'skirt':
+                tips.append("• <strong>Skirt Styling:</strong> The hemline should hit at a flattering point—typically just above or below the knee. Ensure it fits well at the waist. Pair with a tucked-in top and add a belt to define your waistline.")
+    
+    # Outerwear styling
+    if 'jacket' in item_details or 'coat' in item_details:
+        outerwear_type = 'jacket' if 'jacket' in item_details else 'coat'
+        outerwear_color = item_details[outerwear_type][0] if item_details[outerwear_type] else 'unknown'
+        tips.append(f"• <strong>{outerwear_type.title()} Styling:</strong> Your {outerwear_color} {outerwear_type} adds structure to any outfit. Ensure it fits well at the shoulders and isn't too tight when buttoned. Layer over a lighter top for contrast and versatility.")
+    
+    # ===== STYLE-SPECIFIC ADVICE =====
+    
+    if 'formal' in style_lower or 'elegant' in style_lower:
+        tips.append("")
+        tips.append("<strong>Formal Occasion Styling:</strong>")
+        tips.append("• <strong>Fit is Key:</strong> Ensure all pieces are well-tailored. Consider alterations for the perfect fit—this elevates any outfit significantly.")
+        tips.append("• <strong>Accessories Matter:</strong> Add a statement watch, elegant belt, or structured handbag. Keep jewelry coordinated (all gold or all silver).")
+        tips.append("• <strong>Shoe Selection:</strong> Choose closed-toe heels or polished flats that complement the outfit's formality level.")
+        tips.append("• <strong>Grooming:</strong> Ensure shoes are polished, and consider hosiery for a polished finish.")
+    
+    elif 'casual' in style_lower:
         tips.append("")
         tips.append("<strong>Casual Styling:</strong>")
-        tips.append("• Complete the look with comfortable sneakers or flats")
-        tips.append("• Add a denim or leather jacket for layering versatility")
+        tips.append("• <strong>Footwear:</strong> Complete with comfortable sneakers, ankle boots, or flats. Ensure shoes are clean and in good condition.")
+        tips.append("• <strong>Layering:</strong> Add a denim jacket, cardigan, or lightweight blazer for versatility and style.")
+        tips.append("• <strong>Accessories:</strong> A crossbody bag, baseball cap, or casual watch can add personality without overwhelming the look.")
     
-    elif 'formal' in style_lower or 'elegant' in style_lower:
+    # ===== GENERAL PROFESSIONAL TIPS =====
+    
+    if len(tips) < 8:  # Add general tips if we have room
         tips.append("")
-        tips.append("<strong>Formal Styling:</strong>")
-        tips.append("• Ensure proper fit - tailored pieces elevate the outfit")
-        tips.append("• Add a statement accessory like a watch or belt")
+        tips.append("<strong>Universal Styling Principles:</strong>")
+        tips.append("• <strong>Proportion:</strong> Balance fitted pieces with looser ones. If the top is loose, pair with fitted bottoms, and vice versa.")
+        tips.append("• <strong>Texture:</strong> Mix textures (silk, denim, wool, cotton) to add visual interest to monochromatic or simple color schemes.")
+        tips.append("• <strong>Accessories:</strong> Use the 60-30-10 color rule: 60% main color, 30% secondary, 10% accent. Accessories are perfect for that 10%.")
     
-    # Limit to 5 most relevant tips
-    return tips[:5]
+    # Return top 8-10 most relevant tips (more comprehensive)
+    return tips[:10]
 
 
 def format_results_html(result: dict) -> str:
@@ -223,10 +279,12 @@ def format_results_html(result: dict) -> str:
     if style_tips:
         html_parts.append('<div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">')
         html_parts.append('<h4 style="margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.2px;">Style Tips</h4>')
-        html_parts.append('<div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 12px; padding: 1rem;">')
-        for tip in style_tips[:5]:  # Limit to 5 most relevant tips
+        html_parts.append('<div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 12px; padding: 1rem; max-height: 500px; overflow-y: auto;">')
+        for tip in style_tips:  # Display all generated tips (up to 10)
             if tip.strip():  # Skip empty lines
-                html_parts.append(f'<div style="margin-bottom: 0.75rem; font-size: 0.9rem; line-height: 1.5; opacity: 0.95;">{tip}</div>')
+                # Format tips with better spacing and readability
+                tip_html = tip.replace('<strong>', '<strong style="color: rgba(255,255,255,0.95);">')
+                html_parts.append(f'<div style="margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.6; opacity: 0.95; padding-left: 0.5rem; border-left: 2px solid rgba(255,255,255,0.3);">{tip_html}</div>')
         html_parts.append('</div>')
         html_parts.append('</div>')
     
@@ -432,11 +490,28 @@ def create_interface():
                                 </div>
                             </div>
                             
-                            <div style="display: flex; align-items: start; gap: 1rem;">
+                            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
                                 <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">4</div>
                                 <div>
+                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Visual Similarity Search</h4>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Using CLIP (Contrastive Language-Image Pre-training) embeddings, we compare your uploaded image with product images to find visually similar items based on shape, color, and style - just like Google's "Search by Image" feature.</p>
+                                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 3px solid #667eea;">
+                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #475569; font-weight: 700;">How Visual Search Works:</p>
+                                        <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8rem; color: #64748b; line-height: 1.6;">
+                                            <li>Your image is converted to a CLIP embedding (vector representation)</li>
+                                            <li>Each product image is also converted to a CLIP embedding</li>
+                                            <li>Cosine similarity compares embeddings to find visually similar items</li>
+                                            <li>Results are ranked by combined visual (70%) and text (30%) similarity</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: start; gap: 1rem;">
+                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">5</div>
+                                <div>
                                     <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Shop on Trendyol</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Click any product link to view matching items directly on Trendyol.com.</p>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Click any product link to view matching items directly on Trendyol.com. Products are ranked by similarity score, showing the most visually and textually similar items first.</p>
                                 </div>
                             </div>
                         </div>
