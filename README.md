@@ -1,3 +1,12 @@
+<img width="1902" height="1032" alt="Screenshot from 2025-12-30 04-26-58" src="https://github.com/user-attachments/assets/fb151533-ab1b-4784-9acb-cffb131d1392" />
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+<img width="1820" height="1008" alt="Screenshot from 2025-12-30 04-32-01" src="https://github.com/user-attachments/assets/0300db37-c3fc-4b7f-8625-aebf3f1e7b59" />
+
 # Style Finder AI: Computer Vision-Based Fashion Analysis
 
 A sophisticated fashion analysis application that uses Vision Language Models (VLMs) to analyze fashion images and find matching products on Trendyol.com for the Turkish market.
