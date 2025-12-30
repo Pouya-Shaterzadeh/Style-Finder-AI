@@ -95,6 +95,7 @@ class FashionAnalyzer:
                     query,
                     max_results=MAX_SEARCH_RESULTS
                 )
+                print(f"  Found {len(products)} products for query: {query}")
                 
                 # Enhance products with similarity scores and item context
                 enhanced_products = []
@@ -125,6 +126,13 @@ class FashionAnalyzer:
                 p for p in ranked_products
                 if p.get('similarity_score', 0.0) >= MIN_SIMILARITY_SCORE
             ]
+            
+            # Debug: Log product counts and scores
+            print(f"Total products before filtering: {len(ranked_products)}")
+            print(f"Products after filtering (min_score={MIN_SIMILARITY_SCORE}): {len(filtered_products)}")
+            if ranked_products:
+                print(f"Sample product scores: {[p.get('similarity_score', 0.0) for p in ranked_products[:3]]}")
+                print(f"Sample product is_demo flags: {[p.get('is_demo', False) for p in ranked_products[:3]]}")
             
             # Step 7: Limit results
             final_products = filtered_products[:max_results]

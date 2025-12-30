@@ -127,28 +127,37 @@ class ImageProcessor:
     def cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """
         Calculate cosine similarity between two embeddings
+        CLIP embeddings are already normalized, so we can use dot product directly
         
         Args:
-            embedding1: First embedding vector
-            embedding2: Second embedding vector
+            embedding1: First embedding vector (should be normalized)
+            embedding2: Second embedding vector (should be normalized)
             
         Returns:
-            Cosine similarity score (0-1)
+            Cosine similarity score (0-1), where 1 is identical and 0 is completely different
         """
         try:
-            # Normalize vectors
+            # CLIP embeddings are already normalized, so cosine similarity = dot product
+            # But we'll still normalize to be safe
             norm1 = np.linalg.norm(embedding1)
             norm2 = np.linalg.norm(embedding2)
             
             if norm1 == 0 or norm2 == 0:
                 return 0.0
             
-            # Calculate cosine similarity
+            # Calculate cosine similarity (dot product of normalized vectors)
             dot_product = np.dot(embedding1, embedding2)
-            similarity = dot_product / (norm1 * norm2)
+            cosine_sim = dot_product / (norm1 * norm2)
             
-            # Ensure result is between 0 and 1
-            return max(0.0, min(1.0, (similarity + 1) / 2))
+            # CLIP cosine similarity ranges from -1 to 1
+            # Convert to 0-1 scale for easier interpretation
+            # CLIP typically gives values between 0.3-0.9 for similar images
+            normalized_sim = (cosine_sim + 1) / 2
+            
+            # Return the normalized similarity (0-1 scale)
+            # The ranking function will handle score capping for accuracy
+            return max(0.0, min(1.0, normalized_sim))
+            
         except Exception as e:
             print(f"Error calculating cosine similarity: {e}")
             return 0.0
