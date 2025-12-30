@@ -181,8 +181,8 @@ def format_results_html(result: dict) -> str:
     
     html_parts = []
     
-    # Beautiful Layout: Side-by-side Analysis and Products
-    html_parts.append('<div style="display: grid; grid-template-columns: 340px 1fr; gap: 2rem; margin-top: 1rem;">')
+    # Beautiful Layout: Side-by-side Analysis and Products (responsive)
+    html_parts.append('<div class="results-grid-container" style="display: grid; grid-template-columns: 340px 1fr; gap: 2rem; margin-top: 1rem;">')
     
     # Left: Professional Fashion Analysis Panel
     html_parts.append('<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 1.5rem; color: white; height: fit-content; position: sticky; top: 1rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); border: 1px solid rgba(255,255,255,0.1);">')
@@ -260,14 +260,15 @@ def format_product_card_compact(product: dict) -> str:
     # Extract item name from product name (remove "Trendyol'da Ara" suffix)
     display_name = name.replace(" - Trendyol'da Ara", "").strip()
     
-    # Build compact card (No Emojis)
+    # Build compact card (No Emojis) - Mobile-friendly with visible link
     card_html = f"""
     <div class="product-card-compact">
-        <a href="{product_url}" target="_blank" style="text-decoration: none; color: inherit;">
+        <a href="{product_url}" target="_blank" rel="noopener noreferrer" class="product-card-link">
             <div class="product-card-content">
                 <div class="product-details-compact">
                     <div class="product-name-compact">{display_name}</div>
                     <div class="product-match-badge">{similarity_percent}% Match</div>
+                    <div class="product-url-mobile">View on Trendyol →</div>
                 </div>
                 <div class="product-arrow">→</div>
             </div>

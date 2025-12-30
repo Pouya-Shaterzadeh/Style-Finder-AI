@@ -756,30 +756,97 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         # If still no items found, try to detect "man" or "woman" wearing something
         if not result["items"]:
             # Check if it's describing a person
-            if any(word in caption_lower for word in ["man", "woman", "person", "wearing", "outfit"]):
-                # Try to infer items from common outfit descriptions
-                if "jeans" in caption_lower or "denim" in caption_lower:
-                    result["items"].append({
-                        "type": "jeans",
-                        "color": detected_colors[0] if detected_colors else "blue",
-                        "pattern": "solid",
-                        "style": "casual",
-                        "material": "denim",
-                        "features": [],
-                        "description": caption
-                    })
+            if any(word in caption_lower for word in ["man", "woman", "person", "wearing", "outfit", "clothing", "dressed"]):
+                # Try to infer items from common outfit descriptions - be more aggressive
+                # Look for any clothing-related keywords
+                clothing_keywords = {
+                    "top": ["top", "shirt", "blouse", "sweater", "hoodie", "jacket", "coat"],
+                    "bottom": ["pants", "jeans", "trousers", "shorts", "skirt"],
+                    "dress": ["dress", "gown"],
+                    "shoes": ["shoes", "sneakers", "boots", "heels", "sandals"]
+                }
                 
-                # Default: add generic outfit item
+                # Try to find at least one specific item
+                found_any = False
+                for category, keywords in clothing_keywords.items():
+                    for keyword in keywords:
+                        if keyword in caption_lower:
+                            # Determine color
+                            item_color = detected_colors[0] if detected_colors else "unknown"
+                            
+                            # Map to specific item type
+                            if keyword in ["top", "shirt"]:
+                                item_type = "shirt"
+                            elif keyword in ["jeans", "trousers"]:
+                                item_type = "jeans"
+                            elif keyword in ["pants"]:
+                                item_type = "pants"
+                            elif keyword in ["dress", "gown"]:
+                                item_type = "dress"
+                            elif keyword in ["shoes", "sneakers", "boots"]:
+                                item_type = "shoes"
+                            else:
+                                item_type = keyword
+                            
+                            result["items"].append({
+                                "type": item_type,
+                                "color": item_color,
+                                "pattern": "solid",
+                                "style": "casual",
+                                "material": "unknown",
+                                "features": [],
+                                "description": caption
+                            })
+                            found_any = True
+                            break
+                    if found_any:
+                        break
+                
+                # Only use "outfit" as absolute last resort - but mark it so we can filter it out
                 if not result["items"]:
-                    result["items"].append({
-                        "type": "outfit",
-                        "color": detected_colors[0] if detected_colors else "unknown",
-                        "pattern": "unknown",
-                        "style": "casual",
-                        "material": "unknown",
-                        "features": [],
-                        "description": caption
-                    })
+                    # Try one more time with very basic detection
+                    if "dress" in caption_lower or "gown" in caption_lower:
+                        result["items"].append({
+                            "type": "dress",
+                            "color": detected_colors[0] if detected_colors else "unknown",
+                            "pattern": "solid",
+                            "style": "casual",
+                            "material": "unknown",
+                            "features": [],
+                            "description": caption
+                        })
+                    elif any(word in caption_lower for word in ["shirt", "top", "blouse"]):
+                        result["items"].append({
+                            "type": "shirt",
+                            "color": detected_colors[0] if detected_colors else "unknown",
+                            "pattern": "solid",
+                            "style": "casual",
+                            "material": "unknown",
+                            "features": [],
+                            "description": caption
+                        })
+                    elif any(word in caption_lower for word in ["pants", "jeans", "trousers"]):
+                        result["items"].append({
+                            "type": "jeans" if "jean" in caption_lower else "pants",
+                            "color": detected_colors[0] if detected_colors else "blue" if "jean" in caption_lower else "unknown",
+                            "pattern": "solid",
+                            "style": "casual",
+                            "material": "denim" if "jean" in caption_lower else "unknown",
+                            "features": [],
+                            "description": caption
+                        })
+                    # Only if absolutely nothing detected, use outfit (will be filtered out later)
+                    elif not result["items"]:
+                        result["items"].append({
+                            "type": "outfit",
+                            "color": detected_colors[0] if detected_colors else "unknown",
+                            "pattern": "unknown",
+                            "style": "casual",
+                            "material": "unknown",
+                            "features": [],
+                            "description": caption,
+                            "is_generic": True  # Mark as generic for filtering
+                        })
         
         # Determine overall style based on items and caption
         if any(item["type"] in ["suit", "blazer", "dress"] for item in result["items"]):
@@ -850,6 +917,7 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         """
         Generate search queries from fashion data for Trendyol search.
         Uses simplified queries (gender + color + item type) for better results.
+        Filters out generic "outfit" items to prevent vague searches.
         
         Args:
             fashion_data: Dictionary with extracted fashion attributes
@@ -861,7 +929,22 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         items = fashion_data.get("items", [])
         gender = fashion_data.get("gender", "unknown")
         
+        # Generic item types that are too vague for search - filter them out
+        generic_types = {"outfit", "clothing", "garment", "apparel", "wear"}
+        
         for item in items:
+            item_type = item.get("type", "").lower()
+            
+            # Skip generic item types - they're too vague for meaningful search
+            if item_type in generic_types:
+                print(f"Skipping generic item type '{item_type}' - too vague for search")
+                continue
+            
+            # Skip items marked as generic
+            if item.get("is_generic", False):
+                print(f"Skipping generic item: {item_type}")
+                continue
+            
             # Build SIMPLE query: gender + color + item type
             # This gives better, gender-specific results on Trendyol
             query_parts = []
@@ -875,13 +958,32 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                 query_parts.append(item["color"])
             
             # Add item type (required)
-            if item.get("type"):
-                query_parts.append(item["type"])
+            if item_type:
+                query_parts.append(item_type)
             
-            # Only create query if we have item type
-            if query_parts:
+            # Only create query if we have item type and it's not generic
+            if query_parts and item_type not in generic_types:
                 query = " ".join(query_parts)
                 queries.append(query)
         
         # Remove duplicates and return
-        return list(set(queries))[:10]  # Allow up to 10 unique item queries
+        unique_queries = list(set(queries))[:10]  # Allow up to 10 unique item queries
+        
+        # If no valid queries after filtering, try to create at least one from detected colors/gender
+        if not unique_queries and items:
+            # Try to infer a basic query from available data
+            gender = fashion_data.get("gender", "unknown")
+            detected_colors = []
+            for item in items:
+                color = item.get("color", "")
+                if color and color != "unknown":
+                    detected_colors.append(color)
+            
+            if gender != "unknown" and detected_colors:
+                # Create a basic query with gender + first color + "clothing"
+                # This is better than "outfit"
+                basic_query = f"{gender} {detected_colors[0]}"
+                unique_queries.append(basic_query)
+                print(f"Created fallback query: {basic_query}")
+        
+        return unique_queries
