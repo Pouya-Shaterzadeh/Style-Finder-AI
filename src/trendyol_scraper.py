@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import time
 from typing import List, Dict, Optional
 import re
-from urllib.parse import urljoin, quote
+from urllib.parse import urljoin, quote, unquote
 import sys
 import os
 
@@ -128,6 +128,11 @@ class TrendyolScraper:
             # Extract products
             products = self._extract_products(soup, max_results)
             
+            # If no products found, use mock products
+            if not products:
+                print("⚠ No products extracted from Trendyol page, using demo products...")
+                return self._get_mock_products(query, max_results)
+            
             # Add delay to avoid rate limiting
             time.sleep(REQUEST_DELAY)
             
@@ -157,16 +162,31 @@ class TrendyolScraper:
             
             # If no products found via Selenium, use mock products
             if not products:
-                print("Selenium found no products, using demo links...")
-                # Extract query from URL
-                query = search_url.split('q=')[-1].replace('%20', ' ')
-                return self._get_mock_products(query, max_results)
+                print("⚠ Selenium found no products, using demo links...")
+                # Extract query from URL and decode it properly
+                if 'q=' in search_url:
+                    query_encoded = search_url.split('q=')[-1].split('&')[0]
+                    query = unquote(query_encoded)
+                else:
+                    query = ""
+                if query:
+                    return self._get_mock_products(query, max_results)
+                else:
+                    return []
             
             return products
         except Exception as e:
-            print(f"Selenium error: {e}")
-            query = search_url.split('q=')[-1].replace('%20', ' ')
-            return self._get_mock_products(query, max_results)
+            print(f"⚠ Selenium error: {e}, using demo links...")
+            # Extract query from URL and decode it properly
+            if 'q=' in search_url:
+                query_encoded = search_url.split('q=')[-1].split('&')[0]
+                query = unquote(query_encoded)
+            else:
+                query = ""
+            if query:
+                return self._get_mock_products(query, max_results)
+            else:
+                return []
     
     def _translate_to_turkish(self, query: str) -> str:
         """
