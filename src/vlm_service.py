@@ -621,52 +621,59 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             if item_type not in closure_items:
                 return "unknown"
             
-            # PRIORITY 1: Check for ZIPPER patterns FIRST (more specific, often visible)
-            # Zippers are more visually distinct and should be prioritized
-            zipper_patterns = [
-                r"\bzipper\b", r"\bzipped\b", r"\bzip[\s-]*up\b", r"\bzippered\b",
-                r"\bzip\s+front\b", r"\bfront\s+zip\b", r"\bzipping\b",
-                r"\bzipper\s+running\b", r"\bzip\s+closure\b"
-            ]
-            for pattern in zipper_patterns:
-                if re.search(pattern, caption_lower):
-                    print(f"    Detected ZIPPER closure for {item_type}")
-                    return "zippered"
+            # RULE 1: SHIRTS are ALWAYS buttoned - they NEVER have zippers
+            # Dress shirts, casual shirts, button-down shirts all have buttons
+            if item_type == "shirt":
+                print(f"    Shirt detected -> defaulting to BUTTONED (shirts don't have zippers)")
+                return "buttoned"
             
-            # PRIORITY 2: Check for explicit BUTTON patterns
-            button_patterns = [
-                r"\bbutton[\s-]*up\b", r"\bbutton[\s-]*down\b", r"\bbuttoned\b",
-                r"\bbuttons\b", r"\bbutton\s+front\b", r"\bfront\s+button\b"
-            ]
-            for pattern in button_patterns:
-                if re.search(pattern, caption_lower):
-                    print(f"    Detected BUTTON closure for {item_type}")
-                    return "buttoned"
+            # RULE 2: BLAZERS are ALWAYS buttoned
+            if item_type == "blazer":
+                return "buttoned"
             
-            # PRIORITY 3: For sweaters - check if it's explicitly a zip-up sweater/cardigan
+            # RULE 3: CARDIGANS are typically BUTTONED unless explicitly zip-up
             if item_type == "sweater":
-                # Check for zip-up sweater patterns
-                if re.search(r"\bzip[\s-]*up\s*(sweater|cardigan|knit)\b", caption_lower):
-                    return "zippered"
-                if re.search(r"\b(sweater|cardigan|knit)\s+with\s+zip\b", caption_lower):
-                    return "zippered"
-                # Only default to buttoned if "cardigan" is mentioned AND no zip patterns found
-                if re.search(r"\bcardigan\b", caption_lower):
-                    # Cardigans are typically buttoned, but can be zippered
-                    # Only use this default if no explicit closure was found above
-                    print(f"    Defaulting to BUTTONED for cardigan (no explicit closure found)")
+                # Only detect zippered if EXPLICITLY mentioned as zip-up sweater
+                zip_sweater_patterns = [
+                    r"\bzip[\s-]*up\s+sweater\b",
+                    r"\bzippered\s+sweater\b", 
+                    r"\bsweater\s+with\s+(a\s+)?zipper\b",
+                    r"\bzip[\s-]*up\s+cardigan\b",
+                    r"\bzippered\s+cardigan\b"
+                ]
+                for pattern in zip_sweater_patterns:
+                    if re.search(pattern, caption_lower):
+                        print(f"    Detected ZIP-UP sweater/cardigan")
+                        return "zippered"
+                
+                # Default: Cardigans and knit sweaters are typically buttoned
+                if re.search(r"\bcardigan\b|\bknit\b|\bsweater\b", caption_lower):
+                    print(f"    Sweater/cardigan -> defaulting to BUTTONED")
                     return "buttoned"
             
-            # PRIORITY 4: For jackets/hoodies - check context
-            if item_type in ["hoodie", "jacket"]:
-                # Most hoodies/casual jackets are zip-up
+            # RULE 4: COATS - check for explicit patterns
+            if item_type == "coat":
                 if re.search(r"\bzip\b", caption_lower):
                     return "zippered"
+                # Default to buttoned for coats
+                return "buttoned"
             
-            # PRIORITY 5: For coats - check for buttoned coat patterns
-            if item_type == "coat":
-                if re.search(r"\bbuttoned\s*coat\b|\bcoat\s+with\s+buttons\b", caption_lower):
+            # RULE 5: HOODIES - typically zip-up, but only if zip is mentioned
+            if item_type == "hoodie":
+                if re.search(r"\bzip\b|\bzipper\b|\bzipped\b", caption_lower):
+                    return "zippered"
+                # Pullover hoodies have no closure
+                return "unknown"
+            
+            # RULE 6: JACKETS - can be either, check context
+            if item_type == "jacket":
+                # Check for explicit zipper mention near jacket
+                if re.search(r"\bzip[\s-]*(up|ped)?\s+jacket\b|\bjacket\s+with\s+zip\b|\bzippered\s+jacket\b", caption_lower):
+                    return "zippered"
+                if re.search(r"\bbuttoned\s+jacket\b|\bjacket\s+with\s+buttons\b", caption_lower):
                     return "buttoned"
+                # No explicit closure - return unknown
+                return "unknown"
             
             return "unknown"
         
@@ -790,49 +797,63 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         used_colors = []
         
         # First pass: Check for t-shirt specifically (must come before shirt check)
-        # Also check for "white" or "light" colors that might indicate an inner layer
+        # BUT: Only detect t-shirt if there's NO collar mentioned (collars indicate a shirt, not t-shirt)
         tshirt_patterns = [r"\bt-shirt\b", r"\btee\b", r"\btshirt\b", r"\bt\s*shirt\b", r"\bcrew-neck\b", r"\bcrew\s*neck\b"]
         tshirt_found = False
-        for pattern in tshirt_patterns:
-            if re.search(pattern, caption_lower):
-                if "t-shirt" not in found_items:
-                    found_items.add("t-shirt")
-                    # Check if there's a white/light color mentioned (common for inner layers)
-                    item_color = find_color_for_item("t-shirt", tshirt_patterns, caption_lower, used_colors)
-                    
-                    # Special handling: if we detect a jacket/coat, the inner layer is likely white/light
-                    if item_color == "unknown" and any(x in caption_lower for x in ["jacket", "coat", "blazer"]):
-                        # Look specifically for white in the caption
-                        if re.search(r"\bwhite\b", caption_lower):
-                            item_color = "white"
-                        elif re.search(r"\blight\b", caption_lower):
-                            item_color = "white"  # Light colors often mean white/cream
-                    
-                    if item_color == "unknown" and detected_colors:
-                        # Prefer white for t-shirts if it's in detected colors
-                        if "white" in detected_colors:
-                            item_color = "white"
-                        else:
-                            item_color = detected_colors[0]  # Fallback to first detected color
-                    
-                    if item_color != "unknown":
-                        used_colors.append(item_color)
-                    
-                    # Detect texture/material for t-shirt
-                    item_texture = find_texture_for_item("t-shirt", caption_lower)
-                    
-                    result["items"].append({
-                        "type": "t-shirt",
-                        "color": item_color,
-                        "pattern": "solid",
-                        "style": "casual",
-                        "material": item_texture,
-                        "features": [],
-                        "description": caption
-                    })
-                    tshirt_found = True
-                    print(f"  Detected t-shirt: color={item_color}, texture={item_texture}")
-                break
+        
+        # Collar patterns indicate a SHIRT, not a t-shirt - check first
+        collar_indicators = [
+            r"\bcollar\b", r"\bcollared\b", r"\bdress\s*shirt\b", 
+            r"\bbutton[\s-]*down\b", r"\bbutton[\s-]*up\b",
+            r"\bpointed\s+collar\b", r"\bspread\s+collar\b"
+        ]
+        has_collar_in_caption = any(re.search(p, caption_lower) for p in collar_indicators)
+        
+        # Only check for t-shirt if NO collar is detected
+        # If collar is detected, skip t-shirt detection entirely - it will be detected as a shirt
+        if not has_collar_in_caption:
+            for pattern in tshirt_patterns:
+                if re.search(pattern, caption_lower):
+                    if "t-shirt" not in found_items:
+                        found_items.add("t-shirt")
+                        # Check if there's a white/light color mentioned (common for inner layers)
+                        item_color = find_color_for_item("t-shirt", tshirt_patterns, caption_lower, used_colors)
+                        
+                        # Special handling: if we detect a jacket/coat, the inner layer is likely white/light
+                        if item_color == "unknown" and any(x in caption_lower for x in ["jacket", "coat", "blazer"]):
+                            # Look specifically for white in the caption
+                            if re.search(r"\bwhite\b", caption_lower):
+                                item_color = "white"
+                            elif re.search(r"\blight\b", caption_lower):
+                                item_color = "white"  # Light colors often mean white/cream
+                        
+                        if item_color == "unknown" and detected_colors:
+                            # Prefer white for t-shirts if it's in detected colors
+                            if "white" in detected_colors:
+                                item_color = "white"
+                            else:
+                                item_color = detected_colors[0]  # Fallback to first detected color
+                        
+                        if item_color != "unknown":
+                            used_colors.append(item_color)
+                        
+                        # Detect texture/material for t-shirt
+                        item_texture = find_texture_for_item("t-shirt", caption_lower)
+                        
+                        result["items"].append({
+                            "type": "t-shirt",
+                            "color": item_color,
+                            "pattern": "solid",
+                            "style": "casual",
+                            "material": item_texture,
+                            "features": [],
+                            "description": caption
+                        })
+                        tshirt_found = True
+                        print(f"  Detected t-shirt (no collar): color={item_color}, texture={item_texture}")
+                    break
+        else:
+            print(f"  Skipping t-shirt detection - collar detected in caption (will be detected as shirt)")
         
         # Second pass: Check for other clothing items (excluding t-shirt patterns)
         for item_type, patterns in clothing_patterns.items():
