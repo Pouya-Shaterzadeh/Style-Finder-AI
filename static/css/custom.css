@@ -227,8 +227,10 @@ body {
 .product-card-content {
     display: flex;
     align-items: center;
-    padding: 1rem;
+    justify-content: space-between;
+    padding: 1.25rem 1rem;
     gap: 1rem;
+    min-height: 90px;
 }
 
 /* Product icon removed - no emojis */
@@ -236,6 +238,9 @@ body {
 .product-details-compact {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .product-name-compact {
@@ -244,21 +249,25 @@ body {
     color: #1e293b;
     margin-bottom: 0.5rem;
     line-height: 1.4;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* Allow full name to display - no truncation */
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 .product-match-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
-    padding: 0.35rem 0.85rem;
+    padding: 0.4rem 1rem;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
     letter-spacing: 0.3px;
+    margin-top: 0.5rem;
+    min-width: 90px;
 }
 
 .product-arrow {
@@ -601,7 +610,7 @@ body {
 
 /* How It Works Sidebar */
 .how-it-works-sidebar {
-    background: white;
+    background: var(--bg-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
@@ -614,6 +623,119 @@ body {
 
 .how-it-works-sidebar .accordion-content {
     padding: 1rem;
+}
+
+/* How It Works Content Styles */
+.how-it-works-content {
+    color: var(--text-primary);
+}
+
+.step-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.step-description {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.info-box {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.info-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.info-text {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.info-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.info-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.tips-section {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 1.5rem;
+}
+
+.tips-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+/* Products Section Styles */
+.products-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.products-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.products-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Ready to Analyze Section */
+.ready-to-analyze {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+    border-radius: 20px;
+    border: 2px dashed var(--border-color);
+}
+
+.ready-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.ready-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
 /* Example Images Section */
@@ -652,5 +774,314 @@ body {
     text-align: center;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+/* =====================================================
+   DARK MODE STYLES
+   ===================================================== */
+
+/* Dark mode variables */
+.dark,
+[data-theme="dark"],
+body.dark {
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #2d2d3d;
+    --bg-tertiary: #3d3d4d;
+    --text-primary: #e2e8f0;
+    --text-secondary: #a0aec0;
+    --border-color: #4a5568;
+    --card-bg: #2d2d3d;
+}
+
+/* Dark mode - Main background */
+.dark .gradio-container,
+[data-theme="dark"] .gradio-container {
+    background: #1a1a2e !important;
+}
+
+/* Dark mode - All white backgrounds to dark gray */
+.dark .card,
+.dark .upload-section,
+.dark .how-it-works-sidebar,
+.dark .example-image-card,
+[data-theme="dark"] .card,
+[data-theme="dark"] .upload-section,
+[data-theme="dark"] .how-it-works-sidebar,
+[data-theme="dark"] .example-image-card {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Dark mode - Product cards */
+.dark .product-card,
+.dark .product-card-compact,
+[data-theme="dark"] .product-card,
+[data-theme="dark"] .product-card-compact {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Dark mode - Text colors */
+.dark .product-name,
+.dark .product-name-compact,
+.dark .product-brand,
+.dark .product-price,
+.dark .example-label,
+[data-theme="dark"] .product-name,
+[data-theme="dark"] .product-name-compact,
+[data-theme="dark"] .product-brand,
+[data-theme="dark"] .product-price,
+[data-theme="dark"] .example-label {
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode - How It Works sidebar */
+.dark .how-it-works-sidebar,
+[data-theme="dark"] .how-it-works-sidebar {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .how-it-works-sidebar h4,
+.dark .how-it-works-sidebar p,
+.dark .how-it-works-sidebar li,
+.dark .how-it-works-sidebar span,
+[data-theme="dark"] .how-it-works-sidebar h4,
+[data-theme="dark"] .how-it-works-sidebar p,
+[data-theme="dark"] .how-it-works-sidebar li,
+[data-theme="dark"] .how-it-works-sidebar span {
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode - How It Works content classes */
+.dark .step-title,
+.dark .info-title,
+[data-theme="dark"] .step-title,
+[data-theme="dark"] .info-title {
+    color: #e2e8f0 !important;
+}
+
+.dark .step-description,
+.dark .info-text,
+.dark .info-subtitle,
+.dark .info-list,
+.dark .info-list li,
+.dark .tips-list,
+.dark .tips-list li,
+[data-theme="dark"] .step-description,
+[data-theme="dark"] .info-text,
+[data-theme="dark"] .info-subtitle,
+[data-theme="dark"] .info-list,
+[data-theme="dark"] .info-list li,
+[data-theme="dark"] .tips-list,
+[data-theme="dark"] .tips-list li {
+    color: #a0aec0 !important;
+}
+
+.dark .info-box,
+[data-theme="dark"] .info-box {
+    background: rgba(102, 126, 234, 0.2) !important;
+}
+
+.dark .tips-section,
+[data-theme="dark"] .tips-section {
+    border-color: var(--border-color) !important;
+}
+
+/* Dark mode - Products section */
+.dark .products-header,
+[data-theme="dark"] .products-header {
+    border-color: var(--border-color) !important;
+}
+
+.dark .products-title,
+[data-theme="dark"] .products-title {
+    color: #e2e8f0 !important;
+}
+
+.dark .products-subtitle,
+[data-theme="dark"] .products-subtitle {
+    color: #a0aec0 !important;
+}
+
+/* Dark mode - Ready to Analyze section */
+.dark .ready-to-analyze,
+[data-theme="dark"] .ready-to-analyze {
+    background: linear-gradient(135deg, #2d2d3d 0%, #3d3d4d 100%) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark .ready-title,
+[data-theme="dark"] .ready-title {
+    color: #e2e8f0 !important;
+}
+
+.dark .ready-subtitle,
+[data-theme="dark"] .ready-subtitle {
+    color: #a0aec0 !important;
+}
+
+/* Dark mode - Accordion/Collapsible headers */
+.dark .accordion-header,
+.dark button[aria-expanded],
+[data-theme="dark"] .accordion-header,
+[data-theme="dark"] button[aria-expanded] {
+    color: var(--text-primary) !important;
+    background: var(--bg-secondary) !important;
+}
+
+/* Dark mode - Gradio specific overrides */
+.dark .gr-panel,
+.dark .gr-box,
+.dark .gr-form,
+.dark .gr-input,
+.dark .gr-button-secondary,
+[data-theme="dark"] .gr-panel,
+[data-theme="dark"] .gr-box,
+[data-theme="dark"] .gr-form,
+[data-theme="dark"] .gr-input,
+[data-theme="dark"] .gr-button-secondary {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode - Status info and messages */
+.dark .status-info,
+[data-theme="dark"] .status-info {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark .status-warning,
+[data-theme="dark"] .status-warning {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border-color: #f59e0b !important;
+}
+
+.dark .status-error,
+[data-theme="dark"] .status-error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #fca5a5 !important;
+    border-color: #ef4444 !important;
+}
+
+.dark .status-error div,
+.dark .status-error ul,
+.dark .status-error li,
+.dark .status-error strong,
+[data-theme="dark"] .status-error div,
+[data-theme="dark"] .status-error ul,
+[data-theme="dark"] .status-error li,
+[data-theme="dark"] .status-error strong {
+    color: #fca5a5 !important;
+}
+
+/* Dark mode - Scrollbar */
+.dark ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
+/* Dark mode - Links */
+.dark a,
+[data-theme="dark"] a {
+    color: var(--primary-light) !important;
+}
+
+/* Dark mode - Borders */
+.dark [style*="border"],
+[data-theme="dark"] [style*="border"] {
+    border-color: var(--border-color) !important;
+}
+
+/* Dark mode - Inline styled content (from app.py HTML) */
+.dark [style*="color: #1e293b"],
+.dark [style*="color:#1e293b"],
+[data-theme="dark"] [style*="color: #1e293b"],
+[data-theme="dark"] [style*="color:#1e293b"] {
+    color: var(--text-primary) !important;
+}
+
+.dark [style*="color: #64748b"],
+.dark [style*="color:#64748b"],
+[data-theme="dark"] [style*="color: #64748b"],
+[data-theme="dark"] [style*="color:#64748b"] {
+    color: var(--text-secondary) !important;
+}
+
+.dark [style*="color: #475569"],
+.dark [style*="color:#475569"],
+[data-theme="dark"] [style*="color: #475569"],
+[data-theme="dark"] [style*="color:#475569"] {
+    color: var(--text-secondary) !important;
+}
+
+.dark [style*="color: #94a3b8"],
+.dark [style*="color:#94a3b8"],
+[data-theme="dark"] [style*="color: #94a3b8"],
+[data-theme="dark"] [style*="color:#94a3b8"] {
+    color: var(--text-secondary) !important;
+}
+
+/* Dark mode - White backgrounds in inline styles */
+.dark [style*="background: white"],
+.dark [style*="background:white"],
+.dark [style*="background-color: white"],
+.dark [style*="background-color:#fff"],
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background-color: white"],
+[data-theme="dark"] [style*="background-color:#fff"] {
+    background: var(--bg-secondary) !important;
+}
+
+/* Dark mode - Found Products section */
+.dark .products-grid-compact,
+[data-theme="dark"] .products-grid-compact {
+    background: transparent !important;
+}
+
+/* Dark mode - Ensure all heading colors */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode - Paragraphs and list items */
+.dark p, .dark li, .dark span, .dark div,
+[data-theme="dark"] p, [data-theme="dark"] li, [data-theme="dark"] span {
+    color: inherit;
+}
+
+/* Dark mode - Force gray background on main content areas */
+.dark .gr-group,
+.dark .gr-block,
+[data-theme="dark"] .gr-group,
+[data-theme="dark"] .gr-block {
+    background: var(--bg-secondary) !important;
+}
+
+/* Dark mode - Accordion panels */
+.dark .svelte-1ed2p3z,
+.dark [class*="accordion"],
+[data-theme="dark"] .svelte-1ed2p3z,
+[data-theme="dark"] [class*="accordion"] {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode - Info boxes with light backgrounds */
+.dark [style*="background: rgba(102, 126, 234, 0.1)"],
+[data-theme="dark"] [style*="background: rgba(102, 126, 234, 0.1)"] {
+    background: rgba(102, 126, 234, 0.2) !important;
 }
 

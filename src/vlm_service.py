@@ -207,20 +207,43 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             print("🔄 Analyzing image with local model...")
             
             if self.model_type == "blip":
-                # BLIP image captioning
-                inputs = self.local_processor(image, return_tensors="pt").to(self.device)
+                # BLIP conditional image captioning - use text prompts to guide toward fashion
+                # Generate multiple captions with different prompts for better coverage
+                captions = []
                 
-                with torch.no_grad():
-                    output = self.local_model.generate(
-                        **inputs,
-                        max_new_tokens=100,
-                        num_beams=5,
-                        early_stopping=True
-                    )
+                # List of fashion-focused prompts to guide BLIP
+                # Includes prompts for gender, clothing, colors, textures/materials, closures, and accessories
+                fashion_prompts = [
+                    "this is a photo of a [man/woman/boy/girl]",        # Gender detection
+                    "a photo of a person wearing",                       # General clothing
+                    "the clothing colors are",                           # Focus on colors
+                    "the fabric and texture includes",                   # Texture/material focus
+                    "the sweater or jacket is a cardigan or pullover",   # Cardigan vs pullover detection
+                    "the clothing has visible buttons or zipper",        # Closure type detection (buttons/zipper)
+                    "this is a button-up or zip-up",                     # Button-up/zip-up specific
+                    "the accessories include",                           # Accessories like watches
+                ]
                 
-                caption = self.local_processor.decode(output[0], skip_special_tokens=True)
-                print(f"✓ Generated caption: {caption[:100]}...")
-                return caption
+                for prompt in fashion_prompts:
+                    inputs = self.local_processor(image, text=prompt, return_tensors="pt").to(self.device)
+                    
+                    with torch.no_grad():
+                        output = self.local_model.generate(
+                            **inputs,
+                            max_new_tokens=80,
+                            num_beams=5,
+                            early_stopping=True,
+                            repetition_penalty=1.2
+                        )
+                    
+                    caption = self.local_processor.decode(output[0], skip_special_tokens=True)
+                    captions.append(caption)
+                    print(f"  Prompt '{prompt}': {caption}")
+                
+                # Combine all captions for comprehensive extraction
+                combined_caption = " | ".join(captions)
+                print(f"✓ Combined fashion caption: {combined_caption[:200]}...")
+                return combined_caption
             else:
                 # Generic model
                 inputs = self.local_processor(images=image, return_tensors="pt").to(self.device)
@@ -505,15 +528,19 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
         # Comprehensive clothing detection
         # IMPORTANT: Order matters! More specific patterns should come first
         clothing_patterns = {
-            # Tops - T-shirt must come BEFORE shirt to avoid misclassification
+            # Tops - Shirt (collared) should be detected separately from T-shirt (no collar)
+            # Shirt = has collar, buttons, dress shirt, button-down, button-up
+            "shirt": [r"\bshirt\b", r"\bdress\s*shirt\b", r"\bbutton[\s-]*down\b", r"\bbutton[\s-]*up\b", r"\bcollared\b", r"\bcollar\b"],
+            # T-shirt = no collar, crew neck, casual tee
             "t-shirt": [r"\bt-shirt\b", r"\btee\b", r"\btshirt\b", r"\bt\s*shirt\b", r"\bcrew-neck\b", r"\bcrew\s*neck\b"],
-            "shirt": [r"\bshirt\b", r"\bdress\s*shirt\b", r"\bbutton\s*down\b", r"\bcollared\s*shirt\b"],
             "blouse": [r"\bblouse\b"],
-            "sweater": [r"\bsweater\b", r"\bpullover\b", r"\bjumper\b"],
-            "hoodie": [r"\bhoodie\b", r"\bhood\b"],
-            # Jackets/Outerwear
-            "jacket": [r"\bjacket\b", r"\bblazer\b", r"\bcardigan\b", r"\bbomber\b"],
-            "coat": [r"\bcoat\b", r"\bovercoat\b"],
+            "sweater": [r"\bsweater\b", r"\bpullover\b", r"\bjumper\b", r"\bcardigan\b", r"\bknit\b"],
+            # Hoodie - including zip-up hoodie
+            "hoodie": [r"\bhoodie\b", r"\bhood\b", r"\bzip[\s-]*up\s*hoodie\b", r"\bzipped\s*hoodie\b"],
+            # Jackets/Outerwear - including zip-up jacket
+            "jacket": [r"\bjacket\b", r"\bblazer\b", r"\bbomber\b", r"\bzip[\s-]*up\s*jacket\b", r"\bzipped\s*jacket\b"],
+            # Coat - including buttoned coat
+            "coat": [r"\bcoat\b", r"\bovercoat\b", r"\bbuttoned\s*coat\b"],
             # Bottoms
             "pants": [r"\bpants\b", r"\btrousers\b", r"\bslacks\b"],
             "jeans": [r"\bjeans\b", r"\bdenim\b"],
@@ -531,20 +558,96 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             "glasses": [r"\bglasses\b", r"\bsunglasses\b"],
         }
         
-        # Color detection with more options
+        # Color detection with more options (including metallic for accessories)
         colors = {
             "white": [r"\bwhite\b"],
+            "cream": [r"\bcream\b", r"\bivory\b", r"\boff-white\b", r"\beggshell\b"],
+            "beige": [r"\bbeige\b", r"\btan\b", r"\bsand\b", r"\bcamel\b"],
+            "khaki": [r"\bkhaki\b"],
+            "taupe": [r"\btaupe\b", r"\bgreige\b", r"\bmushroom\b"],
+            "olive": [r"\bolive\b", r"\bmilitary\s*green\b", r"\barmy\s*green\b"],
             "black": [r"\bblack\b"],
             "blue": [r"\bblue\b", r"\bnavy\b", r"\bdenim\b"],
             "red": [r"\bred\b", r"\bburgundy\b", r"\bmaroon\b"],
-            "green": [r"\bgreen\b", r"\bolive\b", r"\bkhaki\b"],
-            "brown": [r"\bbrown\b", r"\btan\b", r"\bbeige\b"],
-            "gray": [r"\bgray\b", r"\bgrey\b"],
-            "pink": [r"\bpink\b"],
-            "yellow": [r"\byellow\b"],
-            "purple": [r"\bpurple\b"],
-            "orange": [r"\borange\b"],
+            "green": [r"\bgreen\b", r"\bforest\b", r"\bmint\b", r"\bemerald\b"],
+            "brown": [r"\bbrown\b", r"\bchocolate\b", r"\bcoffee\b"],
+            "gray": [r"\bgray\b", r"\bgrey\b", r"\bcharcoal\b"],
+            "pink": [r"\bpink\b", r"\bblush\b", r"\brose\b"],
+            "yellow": [r"\byellow\b", r"\bmustard\b"],
+            "purple": [r"\bpurple\b", r"\blavender\b", r"\bviolet\b"],
+            "orange": [r"\borange\b", r"\bcoral\b", r"\bterracotta\b"],
+            # Metallic colors (common for watches, jewelry, accessories)
+            "silver": [r"\bsilver\b", r"\bmetallic\b", r"\bsteel\b", r"\bchrome\b"],
+            "gold": [r"\bgold\b", r"\bgolden\b"],
+            "rose gold": [r"\brose\s*gold\b"],
         }
+        
+        # Texture/Material detection
+        textures = {
+            "knit": [r"\bknit\b", r"\bknitted\b", r"\bknitwear\b"],
+            "cotton": [r"\bcotton\b"],
+            "denim": [r"\bdenim\b", r"\bjean\b"],
+            "leather": [r"\bleather\b"],
+            "silk": [r"\bsilk\b", r"\bsilky\b", r"\bsatin\b"],
+            "wool": [r"\bwool\b", r"\bwoolen\b", r"\bcashmere\b"],
+            "linen": [r"\blinen\b"],
+            "velvet": [r"\bvelvet\b"],
+            "suede": [r"\bsuede\b"],
+            "fleece": [r"\bfleece\b"],
+            "chiffon": [r"\bchiffon\b"],
+            "tweed": [r"\btweed\b"],
+            "corduroy": [r"\bcorduroy\b"],
+        }
+        
+        # Closure type detection (buttons, zippers)
+        closures = {
+            "buttoned": [r"\bbutton\b", r"\bbuttoned\b", r"\bbuttons\b", r"\bbutton[\s-]*up\b", r"\bbutton[\s-]*down\b"],
+            "zippered": [r"\bzip\b", r"\bzipper\b", r"\bzipped\b", r"\bzip[\s-]*up\b", r"\bzippered\b"],
+        }
+        
+        # Helper function to find closure type for an item
+        def find_closure_for_item(item_type: str, caption_lower: str) -> str:
+            """Find closure type (button/zipper) mentioned in relation to an item"""
+            # Items that commonly have closures
+            # NOTE: t-shirt is NOT included - t-shirts don't have buttons/zippers
+            # shirt = collared dress shirt with buttons
+            closure_items = ["shirt", "jacket", "coat", "hoodie", "cardigan", "blazer", "sweater"]
+            
+            # T-shirts NEVER have closures - return immediately
+            if item_type == "t-shirt":
+                return "unknown"
+            
+            if item_type not in closure_items:
+                return "unknown"
+            
+            # Special case: Cardigans are by definition buttoned front sweaters
+            # If "cardigan" is mentioned and item_type is sweater, it's buttoned
+            if item_type == "sweater" and re.search(r"\bcardigan\b", caption_lower):
+                return "buttoned"
+            
+            # Special case: Button-up/Button-down shirt patterns
+            if item_type == "shirt":
+                if re.search(r"\bbutton[\s-]*(up|down)\b", caption_lower):
+                    return "buttoned"
+            
+            # Special case: Zip-up hoodie/jacket patterns
+            if item_type in ["hoodie", "jacket"]:
+                if re.search(r"\bzip[\s-]*up\b", caption_lower):
+                    return "zippered"
+            
+            # General closure detection from caption
+            for closure_name, closure_patterns in closures.items():
+                for pattern in closure_patterns:
+                    if re.search(pattern, caption_lower):
+                        return closure_name
+            
+            # For sweaters/cardigans, also check for common visual cues in caption
+            if item_type == "sweater":
+                # If it mentions "open" or "unbuttoned" - it's likely a cardigan with buttons
+                if re.search(r"\bopen\b|\bunbuttoned\b|\bfront\s*open\b", caption_lower):
+                    return "buttoned"
+            
+            return "unknown"
         
         # Helper function to find color associated with a specific item
         def find_color_for_item(item_type: str, item_patterns: list, caption_lower: str, used_colors: list = None) -> str:
@@ -620,6 +723,36 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             
             return best_color if best_color != "unknown" else "unknown"
         
+        # Helper function to find texture/material for an item
+        def find_texture_for_item(item_type: str, caption_lower: str) -> str:
+            """Find texture/material mentioned in relation to an item"""
+            for texture_name, texture_patterns in textures.items():
+                for pattern in texture_patterns:
+                    if re.search(pattern, caption_lower):
+                        return texture_name
+            return "unknown"
+        
+        # Special handling for accessory colors (watches often have metallic colors)
+        def get_accessory_color(item_type: str, caption_lower: str, detected_colors: list) -> str:
+            """Get color for accessories like watches - prefer metallic/white over black"""
+            accessory_types = ["watch", "glasses", "jewelry", "bracelet", "ring"]
+            
+            if item_type in accessory_types:
+                # Check for metallic colors first (common for watches)
+                if re.search(r"\b(silver|metallic|steel|chrome)\b", caption_lower):
+                    return "silver"
+                if re.search(r"\b(gold|golden)\b", caption_lower):
+                    return "gold"
+                if re.search(r"\brose\s*gold\b", caption_lower):
+                    return "rose gold"
+                # Check for white (often used for watch dials/bands)
+                if re.search(r"\bwhite\b", caption_lower):
+                    return "white"
+                # If nothing specific found, default to silver for watches (most common)
+                if item_type == "watch":
+                    return "silver"
+            return None  # Let normal color detection handle it
+        
         # Find all colors in caption (for fallback)
         detected_colors = []
         for color_name, patterns in colors.items():
@@ -664,16 +797,20 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                     if item_color != "unknown":
                         used_colors.append(item_color)
                     
+                    # Detect texture/material for t-shirt
+                    item_texture = find_texture_for_item("t-shirt", caption_lower)
+                    
                     result["items"].append({
                         "type": "t-shirt",
                         "color": item_color,
                         "pattern": "solid",
                         "style": "casual",
-                        "material": "unknown",
+                        "material": item_texture,
                         "features": [],
                         "description": caption
                     })
                     tshirt_found = True
+                    print(f"  Detected t-shirt: color={item_color}, texture={item_texture}")
                 break
         
         # Second pass: Check for other clothing items (excluding t-shirt patterns)
@@ -692,35 +829,120 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                     # Skip shirt detection if t-shirt was already detected and no separate shirt mention
                     continue
             
-            # Special case: If "shirt" is detected but no "t-shirt", and there's a jacket/coat,
-            # it's likely the inner layer is a t-shirt (often white/light colored)
-            if item_type == "shirt" and "t-shirt" not in found_items:
-                # Check if there's a jacket/coat (indicating layered outfit)
-                has_outerwear = any(x in caption_lower for x in ["jacket", "coat", "blazer", "cardigan"])
-                if has_outerwear:
-                    # If white is mentioned, the shirt is likely white (inner layer)
-                    if re.search(r"\bwhite\b", caption_lower):
-                        # Convert this to t-shirt detection instead
+            # IMPORTANT: If sweater is detected, skip jacket (they're often the same garment)
+            # Cardigans and knit items are sweaters, not jackets
+            if item_type == "jacket" and "sweater" in found_items:
+                print(f"  Skipping jacket detection - sweater already found (likely same garment)")
+                continue
+            
+            # Also skip sweater if jacket already found with same color context
+            if item_type == "sweater" and "jacket" in found_items:
+                # Check if it's likely the same garment (knit/cardigan would be sweater)
+                if any(x in caption_lower for x in ["knit", "cardigan", "pullover", "wool"]):
+                    # It's more likely a sweater - remove jacket and add sweater instead
+                    print(f"  Correcting: jacket -> sweater (knit/cardigan detected)")
+                    # Find and update the jacket item to sweater
+                    for i, item in enumerate(result["items"]):
+                        if item.get("type") == "jacket":
+                            result["items"][i]["type"] = "sweater"
+                            found_items.discard("jacket")
+                            found_items.add("sweater")
+                            break
+                    continue
+                else:
+                    print(f"  Skipping sweater detection - jacket already found")
+                    continue
+            
+            # Special case: If "shirt" is detected but no "t-shirt", and there's a sweater/cardigan,
+            # the inner layer is typically a t-shirt (crew neck, no buttons) NOT a collared shirt
+            # UNLESS there's explicit mention of collar/buttons
+            if item_type == "shirt" and "t-shirt" not in found_items and "shirt" not in found_items:
+                # Check if there's a sweater/cardigan (indicating layered outfit with t-shirt underneath)
+                has_cardigan_sweater = any(x in caption_lower for x in ["sweater", "cardigan", "pullover", "knit"])
+                has_jacket_coat = any(x in caption_lower for x in ["jacket", "coat", "blazer"])
+                
+                if has_cardigan_sweater:
+                    # Under cardigans/sweaters, the inner layer is usually a T-SHIRT (not collared shirt)
+                    # Unless explicitly mentioned as collar/button/dress shirt
+                    has_collar_mention = any(x in caption_lower for x in ["collar", "button-up", "button-down", "dress shirt", "collared"])
+                    
+                    if not has_collar_mention:
+                        # It's a t-shirt under the cardigan/sweater
                         found_items.add("t-shirt")
+                        # Default to white for inner layer t-shirts
+                        tshirt_color = "white"
+                        if re.search(r"\bwhite\b", caption_lower):
+                            tshirt_color = "white"
+                        elif re.search(r"\bblack\b", caption_lower) and "white" not in detected_colors:
+                            tshirt_color = "black"
+                        
+                        item_texture = find_texture_for_item("t-shirt", caption_lower)
                         result["items"].append({
                             "type": "t-shirt",
+                            "color": tshirt_color,
+                            "pattern": "solid",
+                            "style": "casual",
+                            "material": item_texture if item_texture != "unknown" else "cotton",
+                            "features": [],  # T-shirts have NO buttons/closure
+                            "description": caption
+                        })
+                        used_colors.append(tshirt_color)
+                        print(f"  Detected t-shirt (under cardigan/sweater): color={tshirt_color}, texture={item_texture}")
+                        continue
+                    else:
+                        # It's a collared shirt
+                        found_items.add("shirt")
+                        item_texture = find_texture_for_item("shirt", caption_lower)
+                        shirt_closure = find_closure_for_item("shirt", caption_lower)
+                        result["items"].append({
+                            "type": "shirt",
                             "color": "white",
                             "pattern": "solid",
                             "style": "casual",
-                            "material": "unknown",
-                            "features": [],
+                            "material": item_texture if item_texture != "unknown" else "cotton",
+                            "closure": shirt_closure,
+                            "features": ["collared"] + ([shirt_closure] if shirt_closure != "unknown" else []),
                             "description": caption
                         })
                         used_colors.append("white")
-                        continue  # Skip adding as "shirt"
+                        print(f"  Detected collared shirt: color=white, texture={item_texture}, closure={shirt_closure}")
+                        continue
+                
+                elif has_jacket_coat:
+                    # Under jackets/coats, could be either t-shirt or collared shirt
+                    # If white is mentioned and collar/button mentioned, it's a shirt
+                    if re.search(r"\bwhite\b", caption_lower):
+                        if any(x in caption_lower for x in ["collar", "button", "dress shirt"]):
+                            # It's a collared shirt
+                            found_items.add("shirt")
+                            item_texture = find_texture_for_item("shirt", caption_lower)
+                            shirt_closure = find_closure_for_item("shirt", caption_lower)
+                            result["items"].append({
+                                "type": "shirt",
+                                "color": "white",
+                                "pattern": "solid",
+                                "style": "casual",
+                                "material": item_texture if item_texture != "unknown" else "cotton",
+                                "closure": shirt_closure,
+                                "features": ["collared"] + ([shirt_closure] if shirt_closure != "unknown" else []),
+                                "description": caption
+                            })
+                            used_colors.append("white")
+                            print(f"  Detected collared shirt: color=white, texture={item_texture}")
+                            continue
             
             for pattern in patterns:
                 if re.search(pattern, caption_lower):
                     if item_type not in found_items:
                         found_items.add(item_type)
                         
-                        # Find the color specifically associated with this item
-                        item_color = find_color_for_item(item_type, patterns, caption_lower, used_colors)
+                        # Special handling for accessories (watches, jewelry) - check metallic colors first
+                        accessory_color = get_accessory_color(item_type, caption_lower, detected_colors)
+                        if accessory_color:
+                            item_color = accessory_color
+                        else:
+                            # Find the color specifically associated with this item
+                            item_color = find_color_for_item(item_type, patterns, caption_lower, used_colors)
                         
                         # Special handling for shirt: if there's a jacket, the shirt is likely white/light
                         if item_type == "shirt" and item_color == "unknown":
@@ -742,15 +964,33 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                         if item_color != "unknown" and item_color not in used_colors:
                             used_colors.append(item_color)
                         
+                        # Detect texture/material for this item
+                        item_texture = find_texture_for_item(item_type, caption_lower)
+                        
+                        # Default textures for common items if not detected
+                        if item_texture == "unknown":
+                            if item_type == "sweater":
+                                item_texture = "knit"  # Sweaters are typically knit
+                            elif item_type == "jeans":
+                                item_texture = "denim"
+                        
+                        # Detect closure type (buttoned/zippered)
+                        item_closure = find_closure_for_item(item_type, caption_lower)
+                        item_features = []
+                        if item_closure != "unknown":
+                            item_features.append(item_closure)
+                        
                         result["items"].append({
                             "type": item_type,
                             "color": item_color,
                             "pattern": "solid",
                             "style": "casual",
-                            "material": "unknown",
-                            "features": [],
+                            "material": item_texture,
+                            "closure": item_closure,
+                            "features": item_features,
                             "description": caption
                         })
+                        print(f"  Detected {item_type}: color={item_color}, texture={item_texture}, closure={item_closure}")
                     break  # Found this item type, move to next
         
         # If still no items found, try to detect "man" or "woman" wearing something
@@ -935,7 +1175,7 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
                 print(f"Skipping generic item: {item_type}")
                 continue
             
-            # Build SIMPLE query: gender + color + item type
+            # Build query: gender + color + closure + texture/material + item type
             # This gives better, gender-specific results on Trendyol
             query_parts = []
             
@@ -947,6 +1187,19 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             if item.get("color") and item["color"] != "unknown":
                 query_parts.append(item["color"])
             
+            # Add closure type if available (e.g., "buttoned shirt", "zip-up jacket")
+            closure = item.get("closure", "unknown")
+            if closure and closure != "unknown":
+                # Convert closure to search-friendly term
+                if closure == "buttoned":
+                    query_parts.append("buttoned")
+                elif closure == "zippered":
+                    query_parts.append("zip-up")
+            
+            # Add texture/material if available (e.g., "knit sweater", "leather jacket")
+            if item.get("material") and item["material"] != "unknown":
+                query_parts.append(item["material"])
+            
             # Add item type (required)
             if item_type:
                 query_parts.append(item_type)
@@ -955,6 +1208,18 @@ Be thorough and identify ALL visible clothing items and accessories. Return ONLY
             if query_parts and item_type not in generic_types:
                 query = " ".join(query_parts)
                 queries.append(query)
+                # Log detailed query breakdown
+                parts_info = []
+                if gender != "unknown":
+                    parts_info.append(f"gender={gender}")
+                if item.get("color") and item["color"] != "unknown":
+                    parts_info.append(f"color={item['color']}")
+                if closure and closure != "unknown":
+                    parts_info.append(f"closure={closure}")
+                if item.get("material") and item["material"] != "unknown":
+                    parts_info.append(f"texture={item['material']}")
+                parts_info.append(f"type={item_type}")
+                print(f"  ✓ Query: '{query}' ({', '.join(parts_info)})")
         
         # Remove duplicates and return
         unique_queries = list(set(queries))[:10]  # Allow up to 10 unique item queries

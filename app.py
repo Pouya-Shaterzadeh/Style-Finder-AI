@@ -294,9 +294,9 @@ def format_results_html(result: dict) -> str:
     html_parts.append('<div>')
     if products:
         html_parts.append(f'''
-        <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0;">
-            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.75rem; font-weight: 800; color: #1e293b; letter-spacing: -0.5px;">Found {len(products)} Products</h2>
-            <p style="margin: 0; color: #64748b; font-size: 0.95rem;">Click any product to view on Trendyol</p>
+        <div class="products-header">
+            <h2 class="products-title">Found {len(products)} Products</h2>
+            <p class="products-subtitle">Click any product to view on Trendyol</p>
         </div>
         ''')
         html_parts.append('<div class="products-grid-compact">')
@@ -332,6 +332,9 @@ def format_product_card_compact(product: dict) -> str:
     # Extract item name from product name (remove "Trendyol'da Ara" suffix)
     display_name = name.replace(" - Trendyol'da Ara", "").strip()
     
+    # Capitalize each word properly for display
+    display_name = display_name.title()
+    
     # Build compact card (No Emojis) - Mobile-friendly with visible link
     card_html = f"""
     <div class="product-card-compact">
@@ -340,7 +343,6 @@ def format_product_card_compact(product: dict) -> str:
                 <div class="product-details-compact">
                     <div class="product-name-compact">{display_name}</div>
                     <div class="product-match-badge">{similarity_percent}% Match</div>
-                    <div class="product-url-mobile">View on Trendyol →</div>
                 </div>
                 <div class="product-arrow">→</div>
             </div>
@@ -447,9 +449,9 @@ def create_interface():
                         # Results Section - Immediately Visible
                         results_output = gr.HTML(
                             value="""
-                            <div style='text-align: center; padding: 5rem 2rem; color: #64748b; background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); border-radius: 20px; border: 2px dashed #e2e8f0;'>
-                                <div style='font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;'>Ready to Analyze</div>
-                                <div style='font-size: 1rem; color: #94a3b8;'>Upload a fashion image and click analyze to discover matching products</div>
+                            <div class='ready-to-analyze'>
+                                <div class='ready-title'>Ready to Analyze</div>
+                                <div class='ready-subtitle'>Upload a fashion image and click analyze to discover matching products</div>
                             </div>
                             """,
                             elem_classes=["analysis-results"]
@@ -459,66 +461,66 @@ def create_interface():
                 # How It Works Sidebar
                 with gr.Accordion("How It Works", open=False, elem_classes=["how-it-works-sidebar"]):
                     gr.HTML("""
-                    <div style="padding: 1rem 0;">
+                    <div class="how-it-works-content" style="padding: 1rem 0;">
                         <div style="margin-bottom: 2rem;">
-                            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">1</div>
+                            <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">1</div>
                                 <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Upload Your Image</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Upload a clear photo of the outfit you want to find matching pieces for.</p>
+                                    <h4 class="step-title">Upload Your Image</h4>
+                                    <p class="step-description">Upload a clear photo of the outfit you want to find matching pieces for.</p>
                                 </div>
                             </div>
                             
-                            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">2</div>
+                            <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">2</div>
                                 <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">AI Agent Analysis</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Our Vision Language Model (VLM) is instructed to act as a specialized <strong>Fashion & Style Analyzer AI Agent</strong>. It analyzes the image to extract clothing items, colors, patterns, styles, and gender with precision.</p>
-                                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 3px solid #667eea;">
-                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #475569; font-weight: 700;">VLM Model: BLIP (Salesforce)</p>
-                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem; color: #64748b; line-height: 1.4;">The model is prompted with specialized instructions to play the role of a Fashion Analyzer agent, extracting structured fashion data from images.</p>
-                                        <p style="margin: 0; font-size: 0.75rem; color: #94a3b8; font-style: italic;">AI Agent Role: Fashion/Style Analyzer</p>
+                                    <h4 class="step-title">AI Agent Analysis</h4>
+                                    <p class="step-description">Our Vision Language Model (VLM) is instructed to act as a specialized <strong>Fashion & Style Analyzer AI Agent</strong>. It analyzes the image to extract clothing items, colors, patterns, styles, and gender with precision.</p>
+                                    <div class="info-box">
+                                        <p class="info-title">VLM Model: BLIP (Salesforce)</p>
+                                        <p class="info-text">The model is prompted with specialized instructions to play the role of a Fashion Analyzer agent, extracting structured fashion data from images.</p>
+                                        <p class="info-subtitle">AI Agent Role: Fashion/Style Analyzer</p>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">3</div>
+                            <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">3</div>
                                 <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Smart Matching</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">The AI agent's extracted fashion attributes are translated to Turkish and used to search Trendyol for precise product matches.</p>
+                                    <h4 class="step-title">Smart Matching</h4>
+                                    <p class="step-description">The AI agent's extracted fashion attributes are translated to Turkish and used to search Trendyol for precise product matches.</p>
                                 </div>
                             </div>
                             
-                            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">4</div>
+                            <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">4</div>
                                 <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Visual Similarity Search</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Using CLIP (Contrastive Language-Image Pre-training) embeddings, we compare your uploaded image with product images to find visually similar items based on shape, color, and style - just like Google's "Search by Image" feature.</p>
-                                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 3px solid #667eea;">
-                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #475569; font-weight: 700;">How Visual Search Works:</p>
-                                        <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8rem; color: #64748b; line-height: 1.6;">
-                                            <li>Your image is converted to a CLIP embedding (vector representation)</li>
-                                            <li>Each product image is also converted to a CLIP embedding</li>
-                                            <li>Cosine similarity compares embeddings to find visually similar items</li>
-                                            <li>Results are ranked by combined visual (70%) and text (30%) similarity</li>
+                                    <h4 class="step-title">BLIP Vision Analysis</h4>
+                                    <p class="step-description">BLIP (Bootstrapping Language-Image Pre-training) by Salesforce uses conditional image captioning to understand fashion images in detail.</p>
+                                    <div class="info-box">
+                                        <p class="info-title">How BLIP Fashion Analysis Works:</p>
+                                        <ul class="info-list">
+                                            <li>Multiple fashion-focused prompts guide the model's attention</li>
+                                            <li>Extracts: clothing type, color, texture/material, and gender</li>
+                                            <li>Detects accessories like watches, bags, and jewelry</li>
+                                            <li>Generates precise search queries for Trendyol matching</li>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div style="display: flex; align-items: start; gap: 1rem;">
-                                <div style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">5</div>
+                            <div class="step-item" style="display: flex; align-items: start; gap: 1rem;">
+                                <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">5</div>
                                 <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Shop on Trendyol</h4>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;">Click any product link to view matching items directly on Trendyol.com. Products are ranked by similarity score, showing the most visually and textually similar items first.</p>
+                                    <h4 class="step-title">Shop on Trendyol</h4>
+                                    <p class="step-description">Click any product link to view matching items directly on Trendyol.com. Search queries include gender, color, texture, and item type for precise matching.</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div style="padding-top: 1.5rem; border-top: 1px solid #e2e8f0; margin-top: 1.5rem;">
-                            <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">Tips for Best Results</h4>
-                            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #64748b; line-height: 1.8;">
+                        <div class="tips-section">
+                            <h4 class="step-title">Tips for Best Results</h4>
+                            <ul class="tips-list">
                                 <li>Use clear, well-lit images</li>
                                 <li>Ensure clothing items are visible</li>
                                 <li>Full-body or upper-body photos work best</li>

@@ -210,22 +210,40 @@ class TrendyolScraper:
             'woman': 'kadın',
         }
         
-        # Color translations
+        # Color translations (including metallic for accessories)
         color_map = {
             'white': 'beyaz',
+            'cream': 'krem',
+            'ivory': 'krem',
+            'beige': 'bej',
+            'tan': 'bej',
+            'khaki': 'haki',
+            'taupe': 'vizon',
+            'olive': 'haki yeşil',
             'black': 'siyah',
             'blue': 'mavi',
+            'navy': 'lacivert',
             'red': 'kırmızı',
+            'burgundy': 'bordo',
             'green': 'yeşil',
+            'forest': 'koyu yeşil',
+            'mint': 'mint yeşil',
             'brown': 'kahverengi',
             'gray': 'gri',
             'grey': 'gri',
+            'charcoal': 'antrasit',
             'pink': 'pembe',
+            'blush': 'pudra',
             'yellow': 'sarı',
+            'mustard': 'hardal',
             'purple': 'mor',
+            'lavender': 'lila',
             'orange': 'turuncu',
-            'navy': 'lacivert',
-            'beige': 'bej',
+            'coral': 'mercan',
+            # Metallic colors (for watches, jewelry, accessories)
+            'silver': 'gümüş',
+            'gold': 'altın',
+            'rose': 'rose',  # Keep as "rose gold" in Turkish
         }
         
         # Item type translations
@@ -257,6 +275,41 @@ class TrendyolScraper:
             'sweater': 'kazak',
             'hoodie': 'kapüşonlu',
             'shorts': 'şort',
+            'watch': 'saat',
+            'glasses': 'gözlük',
+            'sunglasses': 'güneş gözlüğü',
+        }
+        
+        # Texture/Material translations
+        texture_map = {
+            'knit': 'triko',
+            'knitted': 'triko',
+            'knitwear': 'triko',
+            'cotton': 'pamuklu',
+            'denim': 'denim',
+            'leather': 'deri',
+            'silk': 'ipek',
+            'satin': 'saten',
+            'wool': 'yün',
+            'woolen': 'yün',
+            'cashmere': 'kaşmir',
+            'linen': 'keten',
+            'velvet': 'kadife',
+            'suede': 'süet',
+            'fleece': 'polar',
+            'chiffon': 'şifon',
+            'tweed': 'tüvit',
+            'corduroy': 'kadife',
+        }
+        
+        # Closure type translations
+        closure_map = {
+            'buttoned': 'düğmeli',
+            'button-up': 'düğmeli',
+            'button-down': 'düğmeli',
+            'zip-up': 'fermuarlı',
+            'zippered': 'fermuarlı',
+            'zipped': 'fermuarlı',
         }
         
         # Pattern/style translations
@@ -282,6 +335,12 @@ class TrendyolScraper:
             # Try color
             elif word in color_map:
                 translated_words.append(color_map[word])
+            # Try closure type (buttoned/zippered)
+            elif word in closure_map:
+                translated_words.append(closure_map[word])
+            # Try texture/material
+            elif word in texture_map:
+                translated_words.append(texture_map[word])
             # Try item type
             elif word in item_map:
                 translated_words.append(item_map[word])
@@ -321,8 +380,9 @@ class TrendyolScraper:
             'url': base_search_url,  # Unique URL for this specific item
             'image_url': None,
             'description': f"Trendyol'da '{turkish_query}' araması",
-            'similarity_score': 0.80,  # Good score for demo products
+            'similarity_score': 0.85,  # Demo products get high base score (direct query match)
             'is_demo': True,  # Mark as demo product
+            'query_match': query,  # Store original query for scoring
         }
         products.append(product)
         
@@ -551,6 +611,7 @@ class TrendyolScraper:
     def _calculate_text_similarity(self, product: Dict, fashion_attributes: Dict) -> float:
         """
         Calculate text-based similarity between product and fashion attributes
+        Uses weighted matching for different attributes (item type, color, texture)
         
         Args:
             product: Product dictionary
@@ -562,35 +623,116 @@ class TrendyolScraper:
         product_name = (product.get('name', '') + ' ' + product.get('brand', '')).lower()
         product_text = product_name
         
-        # Extract keywords from fashion attributes
-        fashion_keywords = []
-        for item in fashion_attributes.get('items', []):
-            fashion_keywords.extend([
-                item.get('type', '').lower(),
-                item.get('color', '').lower(),
-                item.get('pattern', '').lower(),
-                item.get('style', '').lower(),
-            ])
-        
-        fashion_text = ' '.join([k for k in fashion_keywords if k and k != 'unknown'])
-        
-        # Simple keyword matching
-        if not fashion_text:
-            return 0.5  # Neutral score if no fashion data
-        
-        fashion_words = set(fashion_text.split())
-        product_words = set(product_text.split())
-        
-        if not fashion_words:
+        # No items to compare
+        if not fashion_attributes.get('items'):
             return 0.5
         
-        # Calculate Jaccard similarity
-        intersection = len(fashion_words & product_words)
-        union = len(fashion_words | product_words)
+        # Calculate weighted score for each attribute
+        total_score = 0.0
+        max_possible_score = 0.0
         
-        if union == 0:
-            return 0.0
+        # Weight definitions (higher = more important)
+        WEIGHTS = {
+            'item_type': 0.35,   # Item type match is most important
+            'color': 0.30,       # Color match is very important  
+            'texture': 0.20,     # Texture/material adds specificity
+            'gender': 0.15,      # Gender match
+        }
         
-        similarity = intersection / union
-        return min(1.0, similarity * 2)  # Boost score slightly
+        # Get gender from fashion attributes
+        gender = fashion_attributes.get('gender', 'unknown')
+        gender_turkish = self._translate_to_turkish(gender) if gender != 'unknown' else ''
+        
+        for item in fashion_attributes.get('items', []):
+            item_type = item.get('type', '').lower()
+            item_color = item.get('color', '').lower()
+            item_texture = item.get('material', '').lower()
+            
+            if not item_type or item_type == 'unknown':
+                continue
+            
+            # Translate to Turkish for matching
+            type_turkish = self._translate_to_turkish(item_type)
+            color_turkish = self._translate_to_turkish(item_color) if item_color != 'unknown' else ''
+            texture_turkish = self._translate_to_turkish(item_texture) if item_texture != 'unknown' else ''
+            
+            # Check item type match (required)
+            type_match = 0.0
+            if item_type in product_text or type_turkish in product_text:
+                type_match = 1.0
+            elif any(t in product_text for t in [item_type[:4], type_turkish[:4]] if len(t) >= 4):
+                type_match = 0.7  # Partial match
+            
+            total_score += type_match * WEIGHTS['item_type']
+            max_possible_score += WEIGHTS['item_type']
+            
+            # Check color match
+            color_match = 0.0
+            if item_color and item_color != 'unknown':
+                if item_color in product_text or color_turkish in product_text:
+                    color_match = 1.0
+                # Check for similar colors
+                elif self._colors_similar(item_color, product_text):
+                    color_match = 0.7
+            
+            total_score += color_match * WEIGHTS['color']
+            max_possible_score += WEIGHTS['color']
+            
+            # Check texture/material match
+            texture_match = 0.0
+            if item_texture and item_texture != 'unknown':
+                if item_texture in product_text or texture_turkish in product_text:
+                    texture_match = 1.0
+                # Partial texture matches
+                elif any(t in product_text for t in ['örme', 'triko'] if item_texture == 'knit'):
+                    texture_match = 0.8
+                elif any(t in product_text for t in ['deri', 'leather'] if item_texture == 'leather'):
+                    texture_match = 0.8
+            
+            total_score += texture_match * WEIGHTS['texture']
+            max_possible_score += WEIGHTS['texture']
+            
+            # Check gender match
+            gender_match = 0.0
+            if gender != 'unknown':
+                if gender in product_text or gender_turkish in product_text:
+                    gender_match = 1.0
+                elif 'erkek' in product_text and gender == 'male':
+                    gender_match = 1.0
+                elif 'kadın' in product_text and gender == 'female':
+                    gender_match = 1.0
+            
+            total_score += gender_match * WEIGHTS['gender']
+            max_possible_score += WEIGHTS['gender']
+        
+        # Calculate final score
+        if max_possible_score == 0:
+            return 0.5
+        
+        final_score = total_score / max_possible_score
+        
+        # Apply slight boost for good matches
+        if final_score > 0.6:
+            final_score = min(1.0, final_score * 1.1)
+        
+        return round(final_score, 2)
+    
+    def _colors_similar(self, color: str, text: str) -> bool:
+        """Check if similar colors exist in text"""
+        similar_colors = {
+            'white': ['beyaz', 'krem', 'ivory', 'cream'],
+            'cream': ['beyaz', 'krem', 'ivory', 'white', 'bej'],
+            'beige': ['bej', 'krem', 'cream', 'tan'],
+            'black': ['siyah', 'dark', 'koyu'],
+            'brown': ['kahverengi', 'kahve', 'brown'],
+            'blue': ['mavi', 'lacivert', 'navy'],
+            'gray': ['gri', 'grey', 'antrasit'],
+            'green': ['yeşil', 'haki', 'olive'],
+            'khaki': ['haki', 'yeşil', 'olive'],
+            'olive': ['haki', 'yeşil', 'zeytin'],
+        }
+        
+        if color in similar_colors:
+            return any(sim in text for sim in similar_colors[color])
+        return False
 
