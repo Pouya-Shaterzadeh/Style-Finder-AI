@@ -278,6 +278,7 @@ class TrendyolScraper:
             'watch': 'saat',
             'glasses': 'gözlük',
             'sunglasses': 'güneş gözlüğü',
+            'belt': 'kemer',
         }
         
         # Texture/Material translations
