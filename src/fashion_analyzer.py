@@ -59,8 +59,8 @@ class FashionAnalyzer:
             # Step 1: Preprocess image
             processed_image = self.image_processor.preprocess_image(image)
 
-            # Step 2: Analyze fashion with Qwen2-VL
-            print("Analyzing fashion image with Qwen2-VL...")
+            # Step 2: Analyze fashion with Groq Llama 4 Maverick
+            print("Analyzing fashion image with Groq Llama 4 Maverick...")
             fashion_data = self.vlm_service.analyze_fashion_image(processed_image)
             result['fashion_analysis'] = fashion_data
 
