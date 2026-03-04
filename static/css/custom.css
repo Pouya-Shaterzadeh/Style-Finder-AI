@@ -38,6 +38,11 @@
 /* ---- Reset / Base ----------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Hide Gradio clipboard paste button */
+button[aria-label="Paste from clipboard"] {
+    display: none !important;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
                  'Helvetica Neue', Arial, sans-serif;
@@ -85,7 +90,7 @@ html, body {
 /* Analysis panel | products — side-by-side on wide screens */
 .sf-results-grid {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 380px 1fr;
     gap: 1.5rem;
     margin-top: 1rem;
     align-items: start;
@@ -360,7 +365,7 @@ html, body {
 }
 
 .sf-tips-section {
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
     padding-top: 1.25rem;
     border-top: 1px solid rgba(255,255,255,.2);
 }
@@ -368,24 +373,18 @@ html, body {
 .sf-tips-title {
     font-size: 1rem;
     font-weight: 700;
-    margin: 0 0 0.75rem;
-}
-
-.sf-tips-scroll {
-    background: rgba(255,255,255,.12);
-    border-radius: var(--r-md);
-    padding: 0.9rem;
-    max-height: 420px;
-    overflow-y: auto;
+    margin: 0 0 0.85rem;
 }
 
 .sf-tip-item {
-    font-size: 0.85rem;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.65;
     opacity: .95;
-    padding-left: 0.5rem;
-    border-left: 2px solid rgba(255,255,255,.3);
-    margin-bottom: 0.85rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(255,255,255,.1);
+    border-radius: var(--r-sm);
+    border-left: 2px solid rgba(255,255,255,.4);
+    margin-bottom: 0.65rem;
 }
 
 /* ============================================================
@@ -495,7 +494,7 @@ html, body {
 /* --- Tablet (≤ 1024px) --------------------------------------- */
 @media (max-width: 1024px) {
     .sf-results-grid {
-        grid-template-columns: 280px 1fr;
+        grid-template-columns: 320px 1fr;
         gap: 1.25rem;
     }
 

@@ -110,7 +110,7 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
 # Prompt
 # ---------------------------------------------------------------------------
 
-FASHION_ANALYSIS_PROMPT = """You are a professional fashion analyst. Analyze this image carefully.
+FASHION_ANALYSIS_PROMPT = """You are a professional fashion analyst and personal stylist. Analyze this image carefully.
 
 Return ONLY a valid JSON object with this exact structure:
 {
@@ -126,7 +126,12 @@ Return ONLY a valid JSON object with this exact structure:
     }
   ],
   "overall_style": "one of: casual, smart-casual, formal, sporty, streetwear, bohemian, minimalist, elegant",
-  "occasion": "one of: everyday, work, evening, sport, beach, formal, party"
+  "occasion": "one of: everyday, work, evening, sport, beach, formal, party",
+  "stylist_notes": [
+    "One specific, actionable tip referencing the actual colors and items you see in this image",
+    "One tip about proportion, layering, or fit based on what is visible",
+    "One tip on how to elevate or complete this exact look with accessories or footwear"
+  ]
 }
 
 Rules:
@@ -134,7 +139,8 @@ Rules:
 - Be very precise about colors (say "navy blue" not just "blue")
 - For gender: use visible cues (clothing cut, styling) — default to unisex if unclear
 - List items from most to least prominent
-- Maximum 5 items"""
+- Maximum 5 items
+- stylist_notes: write exactly 3 tips — be image-specific, concise (one sentence each), and professional"""
 
 
 # ---------------------------------------------------------------------------
@@ -174,8 +180,8 @@ class VLMService:
 
     def analyze_fashion_image(self, image: Image.Image) -> Dict:
         """
-        Analyze a fashion image with Groq Llama 3.2 Vision.
-        Returns structured dict: {gender, items[], overall_style, occasion}
+        Analyze a fashion image with Groq Llama 4 Maverick.
+        Returns structured dict: {gender, items[], overall_style, occasion, stylist_notes[]}
         """
         if self.client is None:
             return self._empty_result(
@@ -261,7 +267,7 @@ class VLMService:
 
     def _call_groq(self, image_bytes: bytes, attempt: int = 1) -> Optional[str]:
         """
-        Call Groq Llama 3.2 Vision with the image and fashion prompt.
+        Call Groq Llama 4 Maverick with the image and fashion prompt.
         Image is sent as a base64-encoded data URI.
         Returns raw response text or None on failure.
         """
@@ -344,6 +350,7 @@ class VLMService:
             "items":         [],
             "overall_style": data.get("overall_style", "casual"),
             "occasion":      data.get("occasion", "everyday"),
+            "stylist_notes": [n for n in data.get("stylist_notes", []) if isinstance(n, str) and n.strip()][:3],
         }
         for item in data.get("items", []):
             if not isinstance(item, dict):
@@ -379,5 +386,6 @@ class VLMService:
             "items":         [],
             "overall_style": "unknown",
             "occasion":      "unknown",
+            "stylist_notes": [],
             "error":         error_msg,
         }
