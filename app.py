@@ -260,16 +260,32 @@ def format_results_html(result: dict) -> str:
     html_parts.append('<h3 style="margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px;">Fashion Analysis</h3>')
     html_parts.append('</div>')
     
-    # Detected Items - Professional List (No Emojis)
+    # Detected Items — richer display with all VLM attributes
     if fashion_data.get('items'):
         html_parts.append('<div style="margin-bottom: 1.25rem;">')
         for item in fashion_data['items']:
             item_type = item.get("type", "Unknown").title()
-            item_color = item.get("color", "unknown").title() if item.get("color") != "unknown" else ""
+            item_color = item.get("color", "").title() if item.get("color") not in ("unknown", "", None) else ""
             item_display = f"{item_color} {item_type}".strip() if item_color else item_type
+
+            extra_parts = []
+            pattern = item.get("pattern", "")
+            material = item.get("material", "")
+            fit = item.get("fit", "")
+            description = item.get("description", "")
+            if pattern and pattern not in ("solid", "unknown", ""):
+                extra_parts.append(pattern.title())
+            if material and material not in ("unknown", ""):
+                extra_parts.append(material.title())
+            if fit and fit not in ("unknown", ""):
+                extra_parts.append(fit.title())
+            extra_line = " · ".join(extra_parts) if extra_parts else ""
+
             html_parts.append(f'''
-            <div style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 12px; margin-bottom: 0.75rem; font-size: 0.95rem; font-weight: 500; transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.1);">
-                <span>{item_display}</span>
+            <div style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 12px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.95rem; font-weight: 600;">{item_display}</div>
+                {f'<div style="font-size:0.78rem;opacity:0.85;margin-top:2px;">{extra_line}</div>' if extra_line else ''}
+                {f'<div style="font-size:0.78rem;opacity:0.75;margin-top:3px;font-style:italic;">{description}</div>' if description else ''}
             </div>
             ''')
         html_parts.append('</div>')
@@ -299,7 +315,7 @@ def format_results_html(result: dict) -> str:
             <p class="products-subtitle">Click any product to view on Trendyol</p>
         </div>
         ''')
-        html_parts.append('<div class="products-grid-compact">')
+        html_parts.append('<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">')
         
         for product in products:
             html_parts.append(format_product_card_compact(product))
@@ -315,41 +331,50 @@ def format_results_html(result: dict) -> str:
 
 
 def format_product_card_compact(product: dict) -> str:
-    """
-    Format a product as a compact HTML card for single-view display
-    
-    Args:
-        product: Product dictionary
-        
-    Returns:
-        HTML string for compact product card
-    """
+    """Format a product as a compact HTML card with image, brand, and price."""
     name = product.get('name', 'Unknown Product')
     product_url = product.get('url', '#')
+    image_url = product.get('image_url', '')
+    brand = product.get('brand', '')
+    price_text = product.get('price_text', '')
     similarity_score = product.get('similarity_score', 0.0)
     similarity_percent = int(similarity_score * 100)
-    
-    # Extract item name from product name (remove "Trendyol'da Ara" suffix)
-    display_name = name.replace(" - Trendyol'da Ara", "").strip()
-    
-    # Capitalize each word properly for display
-    display_name = display_name.title()
-    
-    # Build compact card (No Emojis) - Mobile-friendly with visible link
+    is_demo = product.get('is_demo', False)
+
+    # Clean display name
+    display_name = name.replace(" — Trendyol'da Ara", "").replace(" - Trendyol'da Ara", "").strip()
+    if len(display_name) > 60:
+        display_name = display_name[:57] + "..."
+
+    # Image section — show real product image if available, placeholder otherwise
+    if image_url:
+        img_html = f'<img src="{image_url}" alt="{display_name}" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;" onerror="this.style.display=\'none\'">'
+    else:
+        img_html = '<div style="width:100%;height:120px;background:#f3f4f6;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:0.85rem;">No Image</div>'
+
+    # Badge color: green for real products, gray for demo links
+    badge_color = "#10b981" if not is_demo else "#6b7280"
+    badge_label = f"{similarity_percent}% Match" if not is_demo else "Search Link"
+
+    brand_html = f'<div style="font-size:0.75rem;color:#6b7280;margin-bottom:2px;">{brand}</div>' if brand else ''
+    price_html = f'<div style="font-size:0.85rem;font-weight:700;color:#1f2937;margin-top:4px;">{price_text}</div>' if price_text else ''
+
     card_html = f"""
-    <div class="product-card-compact">
-        <a href="{product_url}" target="_blank" rel="noopener noreferrer" class="product-card-link">
-            <div class="product-card-content">
-                <div class="product-details-compact">
-                    <div class="product-name-compact">{display_name}</div>
-                    <div class="product-match-badge">{similarity_percent}% Match</div>
+    <div style="border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:box-shadow 0.2s;margin-bottom:0;">
+        <a href="{product_url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block;">
+            {img_html}
+            <div style="padding:0.75rem;">
+                {brand_html}
+                <div style="font-size:0.88rem;font-weight:600;color:#111827;line-height:1.3;margin-bottom:4px;">{display_name}</div>
+                {price_html}
+                <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+                    <span style="background:{badge_color};color:white;font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;">{badge_label}</span>
+                    <span style="color:#6366f1;font-size:0.8rem;font-weight:600;">View →</span>
                 </div>
-                <div class="product-arrow">→</div>
             </div>
         </a>
     </div>
     """
-    
     return card_html
 
 
@@ -375,9 +400,14 @@ def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str]:
         
         if result.get('success'):
             products_count = len(result.get('products', []))
-            status = f"Analysis complete! Found {products_count} matching products."
+            items_count = len(result.get('fashion_analysis', {}).get('items', []))
+            real_count = sum(1 for p in result.get('products', []) if not p.get('is_demo'))
+            status = (
+                f"Analysis complete! Detected {items_count} item(s). "
+                f"Found {products_count} products ({real_count} real Trendyol listings)."
+            )
         else:
-            status = f"Analysis completed with issues: {result.get('error', 'Unknown error')}"
+            status = f"Analysis issue: {result.get('error', 'Unknown error')}"
         
         # Format results
         results_html = format_results_html(result)
