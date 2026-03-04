@@ -15,75 +15,67 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# VLM Configuration
-# Using Qwen2-VL-7B-Instruct via HF Serverless Inference API
-# - Open access (no gated model approval required)
-# - True multimodal LLM with visual reasoning
-# - Returns structured JSON from a single prompt
+# VLM — Groq Llama 4 Maverick 17B (128 experts) — best free vision model
+# Free tier: no credit card required
+# Get a free key at: https://console.groq.com
 # ---------------------------------------------------------------------------
-VLM_MODEL_NAME = "Qwen/Qwen2-VL-7B-Instruct"
-LLAVA_MODEL_NAME = VLM_MODEL_NAME  # Keep alias for backward compat
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL   = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
-# Always use Server-side Inference API (no local model download on HF Spaces)
-USE_INFERENCE_API = True
+if GROQ_API_KEY:
+    print(f"✓ Groq API key loaded (starts with: {GROQ_API_KEY[:8]}...)")
+else:
+    print("⚠️  GROQ_API_KEY not set — fashion analysis will not work.")
 
 # ---------------------------------------------------------------------------
-# Visual Similarity - Fashion-specific CLIP
-# patrickjohncyh/fashion-clip: trained on 800K+ fashion image-text pairs
-# Drop-in replacement for openai/clip-vit-base-patch32 (same API)
+# Visual Similarity — patrickjohncyh/fashion-clip
+# Trained on 800K+ fashion image-text pairs (vs generic openai/clip-vit)
+# Runs on CPU — compatible with HF Spaces free tier (16 GB RAM)
 # ---------------------------------------------------------------------------
 CLIP_MODEL_NAME = "patrickjohncyh/fashion-clip"
 
-# ---------------------------------------------------------------------------
-# Hugging Face API Configuration
-# ---------------------------------------------------------------------------
+# HF token — used only to download fashion-CLIP weights (public model, optional)
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 
-if HF_API_TOKEN:
-    print(f"✓ Hugging Face API token loaded (starts with: {HF_API_TOKEN[:10]}...)")
-else:
-    print("⚠️  Warning: HF_API_TOKEN not found. Set this env var for VLM access.")
-
 # ---------------------------------------------------------------------------
-# Trendyol Configuration
-# Using internal JSON API instead of HTML scraping (no bot detection)
+# Trendyol — internal JSON API (no HTML scraping, no bot detection)
 # ---------------------------------------------------------------------------
-TRENDYOL_BASE_URL = "https://www.trendyol.com"
-TRENDYOL_SEARCH_URL = "https://www.trendyol.com/sr"
+TRENDYOL_BASE_URL    = "https://www.trendyol.com"
+TRENDYOL_SEARCH_URL  = "https://www.trendyol.com/sr"
 TRENDYOL_JSON_API_URL = (
     "https://public.trendyol.com/discovery-web-searchgw-service/api/"
     "infinite-scroll/product-search-with-typed-items"
 )
 MAX_SEARCH_RESULTS = 20
-REQUEST_DELAY = 0.5  # Reduced since JSON API is faster
+REQUEST_DELAY      = 0.5
 
 # ---------------------------------------------------------------------------
 # Image Processing
 # ---------------------------------------------------------------------------
-IMAGE_SIZE = (512, 512)
+IMAGE_SIZE     = (512, 512)
 MAX_IMAGE_SIZE = 1024
 
 # ---------------------------------------------------------------------------
 # Fashion Analysis
 # ---------------------------------------------------------------------------
-MAX_CLOTHING_ITEMS = 10
+MAX_CLOTHING_ITEMS   = 10
 CONFIDENCE_THRESHOLD = 0.3
 
 # ---------------------------------------------------------------------------
-# Matching Configuration
+# Matching
 # ---------------------------------------------------------------------------
 VISUAL_SIMILARITY_WEIGHT = 0.6
-TEXT_SIMILARITY_WEIGHT = 0.4
-MIN_SIMILARITY_SCORE = 0.25  # Slightly lower to show more real products
+TEXT_SIMILARITY_WEIGHT   = 0.4
+MIN_SIMILARITY_SCORE     = 0.25
 
 # ---------------------------------------------------------------------------
-# UI Configuration
+# UI
 # ---------------------------------------------------------------------------
-GRADIO_THEME = "soft"
+GRADIO_THEME       = "soft"
 MAX_RESULTS_DISPLAY = 12
 
 # ---------------------------------------------------------------------------
-# Device Configuration
+# Device — auto-detect; HF Spaces free tier has no GPU → always "cpu"
 # ---------------------------------------------------------------------------
 try:
     import torch

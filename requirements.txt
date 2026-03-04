@@ -1,22 +1,22 @@
-# Core dependencies
+# Core
 gradio>=6.2.0
 pillow>=10.0.0
 numpy>=1.24.0
 
-# Vision Language Model & Visual Similarity
-# - Qwen2-VL-7B-Instruct via HF Serverless Inference API (VLM)
-# - patrickjohncyh/fashion-clip loaded locally (visual similarity)
+# VLM — Groq Llama 3.2 Vision (API call, no local model download)
+groq>=0.13.0
+
+# Visual similarity — patrickjohncyh/fashion-clip (runs on HF Spaces CPU)
 torch>=2.0.0
 transformers>=4.40.0
 huggingface-hub>=0.23.0
 
-# Image processing
-opencv-python>=4.8.0
+# Image processing (headless = no X11/GUI deps, smaller container)
+opencv-python-headless>=4.8.0
 
 # Web requests (Trendyol JSON API)
 requests>=2.31.0
 
 # Utilities
 python-dotenv>=1.0.0
-tqdm>=4.66.0
 scikit-learn>=1.3.0
