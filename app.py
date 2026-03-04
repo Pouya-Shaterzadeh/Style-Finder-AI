@@ -216,25 +216,25 @@ def get_style_tips(overall_style: str, items: list) -> list:
 
 def format_results_html(result: dict) -> str:
     """
-    Format analysis results as HTML - Compact, single-view design
-    
+    Format analysis results as HTML - responsive CSS-class-driven design.
+
     Args:
         result: Analysis result dictionary
-        
+
     Returns:
         Formatted HTML string
     """
     if not result.get('success'):
         error = result.get('error', 'Unknown error occurred')
         return f"""
-        <div class="status-error" style="padding: 2rem; border-radius: 12px; background: #fef2f2; border: 2px solid #fecaca; color: #991b1b;">
+        <div class="sf-error-panel">
             <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #dc2626;">
                 Unable to Analyze Image
             </div>
-            <div style="font-size: 1rem; line-height: 1.6; color: #7f1d1d;">
+            <div style="font-size: 1rem; line-height: 1.6;">
                 {error}
             </div>
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #fecaca; font-size: 0.95rem; color: #991b1b;">
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #fecaca; font-size: 0.95rem;">
                 <strong>Tips for better results:</strong>
                 <ul style="margin: 0.75rem 0 0 1.5rem; line-height: 1.8;">
                     <li>Use clear, well-lit images</li>
@@ -245,24 +245,20 @@ def format_results_html(result: dict) -> str:
             </div>
         </div>
         """
-    
+
     fashion_data = result.get('fashion_analysis', {})
     products = result.get('products', [])
-    
+
     html_parts = []
-    
-    # Beautiful Layout: Side-by-side Analysis and Products (responsive)
-    html_parts.append('<div class="results-grid-container" style="display: grid; grid-template-columns: 340px 1fr; gap: 2rem; margin-top: 1rem;">')
-    
-    # Left: Professional Fashion Analysis Panel
-    html_parts.append('<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 1.5rem; color: white; height: fit-content; position: sticky; top: 1rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); border: 1px solid rgba(255,255,255,0.1);">')
-    html_parts.append('<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.2);">')
-    html_parts.append('<h3 style="margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px;">Fashion Analysis</h3>')
-    html_parts.append('</div>')
-    
-    # Detected Items — richer display with all VLM attributes
+
+    # Responsive two-column layout (CSS handles breakpoints)
+    html_parts.append('<div class="sf-results-grid">')
+
+    # ── Left: Analysis panel ───────────────────────────────────────────────
+    html_parts.append('<div class="sf-analysis-panel">')
+    html_parts.append('<h3 class="sf-analysis-title">Fashion Analysis</h3>')
+
     if fashion_data.get('items'):
-        html_parts.append('<div style="margin-bottom: 1.25rem;">')
         for item in fashion_data['items']:
             item_type = item.get("type", "Unknown").title()
             item_color = item.get("color", "").title() if item.get("color") not in ("unknown", "", None) else ""
@@ -281,57 +277,52 @@ def format_results_html(result: dict) -> str:
                 extra_parts.append(fit.title())
             extra_line = " · ".join(extra_parts) if extra_parts else ""
 
-            html_parts.append(f'''
-            <div style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 12px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 0.95rem; font-weight: 600;">{item_display}</div>
-                {f'<div style="font-size:0.78rem;opacity:0.85;margin-top:2px;">{extra_line}</div>' if extra_line else ''}
-                {f'<div style="font-size:0.78rem;opacity:0.75;margin-top:3px;font-style:italic;">{description}</div>' if description else ''}
+            html_parts.append(f"""
+            <div class="sf-item-chip">
+                <div class="sf-item-chip-name">{item_display}</div>
+                {f'<div class="sf-item-chip-meta">{extra_line}</div>' if extra_line else ''}
+                {f'<div class="sf-item-chip-desc">{description}</div>' if description else ''}
             </div>
-            ''')
-        html_parts.append('</div>')
-    
-    # Add Style Tips Section (removed style/gender badges as requested)
+            """)
+
     style_tips = get_style_tips(fashion_data.get('overall_style', ''), fashion_data.get('items', []))
     if style_tips:
-        html_parts.append('<div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">')
-        html_parts.append('<h4 style="margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.2px;">Style Tips</h4>')
-        html_parts.append('<div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 12px; padding: 1rem; max-height: 500px; overflow-y: auto;">')
-        for tip in style_tips:  # Display all generated tips (up to 10)
-            if tip.strip():  # Skip empty lines
-                # Format tips with better spacing and readability
-                tip_html = tip.replace('<strong>', '<strong style="color: rgba(255,255,255,0.95);">')
-                html_parts.append(f'<div style="margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.6; opacity: 0.95; padding-left: 0.5rem; border-left: 2px solid rgba(255,255,255,0.3);">{tip_html}</div>')
-        html_parts.append('</div>')
-        html_parts.append('</div>')
-    
-    html_parts.append('</div>')  # End left column
-    
-    # Right: Products Grid - Beautiful & Immediately Visible
+        html_parts.append('<div class="sf-tips-section">')
+        html_parts.append('<h4 class="sf-tips-title">Style Tips</h4>')
+        html_parts.append('<div class="sf-tips-scroll">')
+        for tip in style_tips:
+            if tip.strip():
+                html_parts.append(f'<div class="sf-tip-item">{tip}</div>')
+        html_parts.append('</div>')  # sf-tips-scroll
+        html_parts.append('</div>')  # sf-tips-section
+
+    html_parts.append('</div>')  # sf-analysis-panel
+
+    # ── Right: Product grid ────────────────────────────────────────────────
     html_parts.append('<div>')
     if products:
-        html_parts.append(f'''
-        <div class="products-header">
-            <h2 class="products-title">Found {len(products)} Products</h2>
-            <p class="products-subtitle">Click any product to view on Trendyol</p>
+        real_count = sum(1 for p in products if not p.get('is_demo'))
+        html_parts.append(f"""
+        <div class="sf-products-header">
+            <h2 class="sf-products-title">Found {len(products)} Products</h2>
+            <p class="sf-products-sub">{real_count} real Trendyol listings · Click to view</p>
         </div>
-        ''')
-        html_parts.append('<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">')
-        
+        """)
+        html_parts.append('<div class="sf-products-grid">')
         for product in products:
             html_parts.append(format_product_card_compact(product))
-        
-        html_parts.append('</div>')
+        html_parts.append('</div>')  # sf-products-grid
     else:
-        html_parts.append('<div class="status-info">No matching products found. Try uploading a different image.</div>')
-    
-    html_parts.append('</div>')  # End right column
-    html_parts.append('</div>')  # End grid
-    
+        html_parts.append('<div class="sf-status sf-status-info">No matching products found. Try uploading a different image.</div>')
+
+    html_parts.append('</div>')  # right column
+    html_parts.append('</div>')  # sf-results-grid
+
     return ''.join(html_parts)
 
 
 def format_product_card_compact(product: dict) -> str:
-    """Format a product as a compact HTML card with image, brand, and price."""
+    """Format a product as a compact HTML card using CSS classes."""
     name = product.get('name', 'Unknown Product')
     product_url = product.get('url', '#')
     image_url = product.get('image_url', '')
@@ -346,36 +337,34 @@ def format_product_card_compact(product: dict) -> str:
     if len(display_name) > 60:
         display_name = display_name[:57] + "..."
 
-    # Image section — show real product image if available, placeholder otherwise
+    # Image section
     if image_url:
-        img_html = f'<img src="{image_url}" alt="{display_name}" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;" onerror="this.style.display=\'none\'">'
+        img_html = f'<img src="{image_url}" alt="{display_name}" class="sf-card-img" onerror="this.style.display=\'none\'">'
     else:
-        img_html = '<div style="width:100%;height:120px;background:#f3f4f6;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:0.85rem;">No Image</div>'
+        img_html = '<div class="sf-card-img-placeholder">No Image</div>'
 
-    # Badge color: green for real products, gray for demo links
-    badge_color = "#10b981" if not is_demo else "#6b7280"
+    badge_class = "sf-badge sf-badge-real" if not is_demo else "sf-badge sf-badge-demo"
     badge_label = f"{similarity_percent}% Match" if not is_demo else "Search Link"
 
-    brand_html = f'<div style="font-size:0.75rem;color:#6b7280;margin-bottom:2px;">{brand}</div>' if brand else ''
-    price_html = f'<div style="font-size:0.85rem;font-weight:700;color:#1f2937;margin-top:4px;">{price_text}</div>' if price_text else ''
+    brand_html = f'<div class="sf-card-brand">{brand}</div>' if brand else ''
+    price_html = f'<div class="sf-card-price">{price_text}</div>' if price_text else ''
 
-    card_html = f"""
-    <div style="border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:box-shadow 0.2s;margin-bottom:0;">
-        <a href="{product_url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block;">
+    return f"""
+    <div class="sf-card fade-in">
+        <a href="{product_url}" target="_blank" rel="noopener noreferrer">
             {img_html}
-            <div style="padding:0.75rem;">
+            <div class="sf-card-body">
                 {brand_html}
-                <div style="font-size:0.88rem;font-weight:600;color:#111827;line-height:1.3;margin-bottom:4px;">{display_name}</div>
+                <div class="sf-card-name">{display_name}</div>
                 {price_html}
-                <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
-                    <span style="background:{badge_color};color:white;font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;">{badge_label}</span>
-                    <span style="color:#6366f1;font-size:0.8rem;font-weight:600;">View →</span>
+                <div class="sf-card-footer">
+                    <span class="{badge_class}">{badge_label}</span>
+                    <span class="sf-card-cta">View →</span>
                 </div>
             </div>
         </a>
     </div>
     """
-    return card_html
 
 
 def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str]:
@@ -479,9 +468,9 @@ def create_interface():
                         # Results Section - Immediately Visible
                         results_output = gr.HTML(
                             value="""
-                            <div class='ready-to-analyze'>
-                                <div class='ready-title'>Ready to Analyze</div>
-                                <div class='ready-subtitle'>Upload a fashion image and click analyze to discover matching products</div>
+                            <div class='sf-ready'>
+                                <div class='sf-ready-title'>Ready to Analyze</div>
+                                <div class='sf-ready-sub'>Upload a fashion image and click Analyze to discover matching products on Trendyol</div>
                             </div>
                             """,
                             elem_classes=["analysis-results"]
@@ -500,54 +489,53 @@ def create_interface():
                                     <p class="step-description">Upload a clear photo of the outfit you want to find matching pieces for.</p>
                                 </div>
                             </div>
-                            
+
                             <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
                                 <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">2</div>
                                 <div>
-                                    <h4 class="step-title">AI Agent Analysis</h4>
-                                    <p class="step-description">Our Vision Language Model (VLM) is instructed to act as a specialized <strong>Fashion & Style Analyzer AI Agent</strong>. It analyzes the image to extract clothing items, colors, patterns, styles, and gender with precision.</p>
+                                    <h4 class="step-title">Qwen2-VL Vision Analysis</h4>
+                                    <p class="step-description">Qwen2-VL-7B-Instruct — a state-of-the-art multimodal LLM — analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM Model: BLIP (Salesforce)</p>
-                                        <p class="info-text">The model is prompted with specialized instructions to play the role of a Fashion Analyzer agent, extracting structured fashion data from images.</p>
-                                        <p class="info-subtitle">AI Agent Role: Fashion/Style Analyzer</p>
+                                        <p class="info-title">VLM: Qwen2-VL-7B-Instruct (Alibaba/Qwen)</p>
+                                        <p class="info-text">A true vision-language model that reasons about images, not just captions them. Single structured JSON prompt — no multi-step guesswork.</p>
+                                        <p class="info-subtitle">Runs via HF Serverless Inference API</p>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
                                 <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">3</div>
                                 <div>
-                                    <h4 class="step-title">Smart Matching</h4>
-                                    <p class="step-description">The AI agent's extracted fashion attributes are translated to Turkish and used to search Trendyol for precise product matches.</p>
+                                    <h4 class="step-title">Smart Turkish Query Generation</h4>
+                                    <p class="step-description">VLM-extracted attributes are translated to Turkish and combined into precise Trendyol search queries (e.g. "Kadın Lacivert Slim Jean").</p>
                                 </div>
                             </div>
-                            
+
                             <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
                                 <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">4</div>
                                 <div>
-                                    <h4 class="step-title">BLIP Vision Analysis</h4>
-                                    <p class="step-description">BLIP (Bootstrapping Language-Image Pre-training) by Salesforce uses conditional image captioning to understand fashion images in detail.</p>
+                                    <h4 class="step-title">Trendyol JSON API Search</h4>
+                                    <p class="step-description">Queries Trendyol's internal product search API for real listings — actual prices, images, and product pages. No scraping, no bot detection.</p>
                                     <div class="info-box">
-                                        <p class="info-title">How BLIP Fashion Analysis Works:</p>
+                                        <p class="info-title">Visual Similarity: Fashion-CLIP</p>
                                         <ul class="info-list">
-                                            <li>Multiple fashion-focused prompts guide the model's attention</li>
-                                            <li>Extracts: clothing type, color, texture/material, and gender</li>
-                                            <li>Detects accessories like watches, bags, and jewelry</li>
-                                            <li>Generates precise search queries for Trendyol matching</li>
+                                            <li>patrickjohncyh/fashion-clip — trained on 800K+ fashion pairs</li>
+                                            <li>Text-image cosine similarity ranks product relevance</li>
+                                            <li>No product thumbnail downloads required</li>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="step-item" style="display: flex; align-items: start; gap: 1rem;">
                                 <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">5</div>
                                 <div>
                                     <h4 class="step-title">Shop on Trendyol</h4>
-                                    <p class="step-description">Click any product link to view matching items directly on Trendyol.com. Search queries include gender, color, texture, and item type for precise matching.</p>
+                                    <p class="step-description">Click any product card to view the real listing on Trendyol.com with accurate price, brand, and availability.</p>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="tips-section">
                             <h4 class="step-title">Tips for Best Results</h4>
                             <ul class="tips-list">
@@ -561,26 +549,30 @@ def create_interface():
                     """)
         
         # Event Handlers
+        LOADING_HTML = """
+        <div class="sf-loading">
+            <div class="sf-spinner"></div>
+            <div class="sf-loading-text">Analyzing your outfit...</div>
+            <div class="sf-loading-sub">Qwen2-VL is identifying clothing items, colors, and style</div>
+        </div>
+        """
+
         def show_analyzing():
-            return gr.update(value="Analyzing...", visible=True)
-        
+            return gr.update(value=LOADING_HTML)
+
         def hide_status():
             return gr.update(value="", visible=False)
         
         analyze_btn.click(
             fn=show_analyzing,
             inputs=None,
-            outputs=status_output
+            outputs=results_output
         ).then(
             fn=analyze_fashion_image,
             inputs=[image_input],
             outputs=[status_output, results_output]
-        ).then(
-            fn=hide_status,
-            inputs=None,
-            outputs=status_output
         )
-        
+
         image_input.upload(
             fn=hide_status,
             inputs=None,
