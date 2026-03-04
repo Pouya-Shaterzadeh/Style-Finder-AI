@@ -181,7 +181,7 @@ def format_product_card_compact(product: dict) -> str:
 
 
 def format_results_html(result: dict) -> str:
-    """Render the product grid only (right column)."""
+    """Format analysis results as HTML — two-column sf-results-grid layout."""
     if not result.get('success'):
         error = result.get('error', 'Unknown error occurred')
         return f"""
@@ -202,9 +202,18 @@ def format_results_html(result: dict) -> str:
         </div>
         """
 
-    products = result.get('products', [])
-    html_parts = []
+    fashion_data = result.get('fashion_analysis', {})
+    products     = result.get('products', [])
+    html_parts   = []
 
+    # ── Two-column grid ────────────────────────────────────────────────────
+    html_parts.append('<div class="sf-results-grid">')
+
+    # Left: Outfit Breakdown + Stylist Notes
+    html_parts.append(format_analysis_html(result))
+
+    # Right: Product grid
+    html_parts.append('<div>')
     if products:
         real_count = sum(1 for p in products if not p.get('is_demo'))
         sub_html = (
@@ -227,6 +236,8 @@ def format_results_html(result: dict) -> str:
             '<div class="sf-status sf-status-info">No matching products found. '
             'Try uploading a different image.</div>'
         )
+    html_parts.append('</div>')  # right column
+    html_parts.append('</div>')  # sf-results-grid
 
     return ''.join(html_parts)
 
@@ -235,15 +246,15 @@ def format_results_html(result: dict) -> str:
 # Main analysis function
 # ---------------------------------------------------------------------------
 
-def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str, str]:
+def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str]:
     """
     Analyze fashion image and find products.
 
     Returns:
-        (status_message, analysis_html, products_html)
+        (status_message, results_html)
     """
     if image is None:
-        return "Please upload an image first.", "", ""
+        return "Please upload an image first.", ""
 
     try:
         result = analyzer.analyze_and_find_products(image, max_results=MAX_RESULTS_DISPLAY)
@@ -259,12 +270,12 @@ def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str, str]:
         else:
             status = f"Analysis issue: {result.get('error', 'Unknown error')}"
 
-        return status, format_analysis_html(result), format_results_html(result)
+        return status, format_results_html(result)
 
     except Exception as e:
         error_msg = f"An error occurred: {str(e)}"
         print(f"Error in analyze_fashion_image: {e}")
-        return error_msg, "", f'<div class="status-error">{error_msg}</div>'
+        return error_msg, f'<div class="status-error">{error_msg}</div>'
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +298,7 @@ def create_interface():
             <!-- Dark/light toggle — fully inline onclick so Gradio script sandboxing can't break it -->
             <button id="sf-theme-toggle" title="Toggle dark/light mode"
                 onclick="var h=document.documentElement,d=h.classList.contains('dark');d?(h.classList.remove('dark'),h.removeAttribute('data-theme'),this.textContent='🌙'):(h.classList.add('dark'),h.setAttribute('data-theme','dark'),this.textContent='☀️');try{localStorage.setItem('sf-theme',d?'light':'dark')}catch(e){}"
-                style="position:absolute;top:1.8rem;right:1.25rem;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:50%;width:40px;height:40px;font-size:1.15rem;cursor:pointer;backdrop-filter:blur(6px);z-index:10;display:flex;align-items:center;justify-content:center;transition:background .2s;">
+                style="position:fixed;top:4.5rem;right:1.25rem;background:rgba(102,126,234,.85);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:50%;width:40px;height:40px;font-size:1.15rem;cursor:pointer;backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;transition:background .2s;box-shadow:0 4px 12px rgba(0,0,0,.25);">
                 🌙
             </button>
             <style>
@@ -306,7 +317,7 @@ def create_interface():
                         image_input = gr.Image(
                             type="pil",
                             label="Upload Fashion Image",
-                            height=220,
+                            height=350,
                             show_label=True,
                         )
                         analyze_btn = gr.Button(
@@ -320,8 +331,6 @@ def create_interface():
                             elem_classes=["status-minimal"],
                             visible=False,
                         )
-                        # Outfit Breakdown + Stylist Notes injected here after analysis
-                        analysis_output = gr.HTML(value="", elem_classes=["sf-left-panel"])
 
                     with gr.Column(scale=2, min_width=480):
                         results_output = gr.HTML(
@@ -410,7 +419,7 @@ def create_interface():
         """
 
         def show_analyzing():
-            return gr.update(value=LOADING_HTML), gr.update(value="")
+            return gr.update(value=LOADING_HTML)
 
         def hide_status():
             return gr.update(value="", visible=False)
@@ -418,11 +427,11 @@ def create_interface():
         analyze_btn.click(
             fn=show_analyzing,
             inputs=None,
-            outputs=[results_output, analysis_output],
+            outputs=[results_output],
         ).then(
             fn=analyze_fashion_image,
             inputs=[image_input],
-            outputs=[status_output, analysis_output, results_output],
+            outputs=[status_output, results_output],
         )
 
         image_input.upload(

@@ -293,6 +293,8 @@ html, body {
     color: #fff;
     box-shadow: var(--sh-lg), var(--sh-glow);
     margin-top: 0.75rem;
+    position: sticky;
+    top: 1rem;
 }
 
 .sf-analysis-title {
@@ -616,3 +618,41 @@ html, body {
 /* Dark mode — scrollbar */
 .dark ::-webkit-scrollbar-track,  [data-theme="dark"] ::-webkit-scrollbar-track  { background: var(--c-bg); }
 .dark ::-webkit-scrollbar-thumb,  [data-theme="dark"] ::-webkit-scrollbar-thumb  { background: var(--c-border); }
+
+/* Dark mode — image upload drop zone */
+.dark button[aria-dropeffect="copy"],
+[data-theme="dark"] button[aria-dropeffect="copy"] {
+    background: var(--c-surface) !important;
+    color: var(--c-text-muted) !important;
+    border-color: var(--c-border) !important;
+}
+
+.dark button[aria-dropeffect="copy"] svg,
+[data-theme="dark"] button[aria-dropeffect="copy"] svg {
+    stroke: var(--c-text-muted) !important;
+}
+
+/* Dark mode — image source-selection bar (upload / camera / clipboard buttons) */
+.dark .source-selection,
+[data-theme="dark"] .source-selection {
+    background: var(--c-surface) !important;
+    border-top-color: var(--c-border) !important;
+}
+
+.dark .source-selection button,
+[data-theme="dark"] .source-selection button {
+    color: var(--c-text-muted) !important;
+}
+
+.dark .source-selection button.selected,
+[data-theme="dark"] .source-selection button.selected {
+    color: var(--c-primary-lt) !important;
+    background: rgba(99,102,241,.15) !important;
+}
+
+/* Dark mode — image component outer wrapper */
+.dark .image-container,
+[data-theme="dark"] .image-container {
+    background: var(--c-surface) !important;
+    border-color: var(--c-border) !important;
+}
