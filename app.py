@@ -412,11 +412,7 @@ def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str]:
 def create_interface():
     """Create and configure the Gradio interface - Professional single-view design"""
     
-    with gr.Blocks(
-        theme=gr.themes.Soft(),
-        title="Style Finder AI - Fashion Analysis",
-        css=custom_css
-    ) as demo:
+    with gr.Blocks(title="Style Finder AI - Fashion Analysis") as demo:
         
         # Professional Header with Animation
         gr.HTML("""
@@ -593,6 +589,8 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=7860,
         share=False,
-        show_error=True
+        show_error=True,
+        theme=gr.themes.Soft(),
+        css=custom_css
     )
 
