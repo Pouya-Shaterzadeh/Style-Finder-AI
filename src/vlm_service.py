@@ -110,7 +110,7 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
 # Prompt
 # ---------------------------------------------------------------------------
 
-FASHION_ANALYSIS_PROMPT = """You are a professional fashion analyst and personal stylist. Analyze this image carefully.
+FASHION_ANALYSIS_PROMPT = """You are a senior fashion editor and personal stylist. Study this image carefully before writing anything.
 
 Return ONLY a valid JSON object with this exact structure:
 {
@@ -128,9 +128,9 @@ Return ONLY a valid JSON object with this exact structure:
   "overall_style": "one of: casual, smart-casual, formal, sporty, streetwear, bohemian, minimalist, elegant",
   "occasion": "one of: everyday, work, evening, sport, beach, formal, party",
   "stylist_notes": [
-    "One specific, actionable tip referencing the actual colors and items you see in this image",
-    "One tip about proportion, layering, or fit based on what is visible",
-    "One tip on how to elevate or complete this exact look with accessories or footwear"
+    "COLOR PALETTE — evaluate the specific color combination you see: do the exact colors complement each other? Name the colors and give a precise verdict with one concrete action (e.g. 'The olive cargo pants and cream ribbed top form a grounded, earthy pairing — swap white sneakers for tan leather boots to stay in the warm palette.').",
+    "FIT & PROPORTION — comment on the silhouette the visible items create together: are the proportions balanced? Call out any specific imbalance (oversized vs slim, cropped vs high-waisted) and state clearly whether it works or exactly how to fix it.",
+    "FINISHING TOUCH — identify the single most impactful item missing from this outfit and name it precisely with a color (e.g. 'A thin cognac leather belt would anchor the high-waisted trousers and add definition to the waist that is currently lost under the relaxed blouse.')."
   ]
 }
 
@@ -140,7 +140,7 @@ Rules:
 - For gender: use visible cues (clothing cut, styling) — default to unisex if unclear
 - List items from most to least prominent
 - Maximum 5 items
-- stylist_notes: write exactly 3 tips — be image-specific, concise (one sentence each), and professional"""
+- stylist_notes: write exactly 3 notes following the COLOR PALETTE / FIT & PROPORTION / FINISHING TOUCH structure; each note must be 1-2 sentences; ALWAYS reference the specific colors and items you actually observe; NO generic advice"""
 
 
 # ---------------------------------------------------------------------------

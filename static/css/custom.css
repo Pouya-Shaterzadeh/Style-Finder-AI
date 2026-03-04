@@ -163,12 +163,9 @@ html, body {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--c-text);
-    line-height: 1.35;
+    line-height: 1.4;
     margin-bottom: 4px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    word-break: break-word;
 }
 
 .sf-card-price {
@@ -294,9 +291,8 @@ html, body {
     border-radius: var(--r-xl);
     padding: 1.5rem;
     color: #fff;
-    position: sticky;
-    top: 1rem;
     box-shadow: var(--sh-lg), var(--sh-glow);
+    margin-top: 0.75rem;
 }
 
 .sf-analysis-title {
@@ -371,20 +367,22 @@ html, body {
 }
 
 .sf-tips-title {
-    font-size: 1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    margin: 0 0 0.85rem;
+    margin: 0 0 0.9rem;
+    letter-spacing: -0.01em;
 }
 
 .sf-tip-item {
-    font-size: 0.875rem;
-    line-height: 1.65;
-    opacity: .95;
-    padding: 0.6rem 0.75rem;
-    background: rgba(255,255,255,.1);
-    border-radius: var(--r-sm);
-    border-left: 2px solid rgba(255,255,255,.4);
-    margin-bottom: 0.65rem;
+    font-size: 1rem;
+    line-height: 1.7;
+    opacity: 1;
+    padding: 0.8rem 1rem;
+    background: rgba(255,255,255,.12);
+    border-radius: var(--r-md);
+    border-left: 3px solid rgba(255,255,255,.55);
+    margin-bottom: 0.75rem;
+    font-weight: 400;
 }
 
 /* ============================================================
