@@ -28,6 +28,48 @@ if os.path.exists(CSS_PATH):
         custom_css = f.read()
 
 
+# ---------------------------------------------------------------------------
+# Color dot helper
+# ---------------------------------------------------------------------------
+
+_COLOR_CSS: dict = {
+    "black": "#111827", "white": "#f9fafb", "gray": "#6b7280", "grey": "#6b7280",
+    "navy": "#1e3a5f", "navy blue": "#1e3a5f", "blue": "#3b82f6",
+    "light blue": "#93c5fd", "dark blue": "#1e40af", "royal blue": "#2563eb",
+    "red": "#ef4444", "dark red": "#991b1b", "burgundy": "#7f1d1d",
+    "maroon": "#7f1d1d", "wine": "#7f1d1d", "green": "#22c55e",
+    "dark green": "#166534", "olive": "#7c6c2f", "olive green": "#7c6c2f",
+    "khaki": "#b5a642", "mint": "#6ee7b7", "mint green": "#6ee7b7",
+    "brown": "#92400e", "dark brown": "#451a03", "tan": "#d4a96a",
+    "camel": "#d4a96a", "beige": "#e8d5b0", "cream": "#fef3c7",
+    "off-white": "#f5f0e8", "ivory": "#f5f0e8", "yellow": "#eab308",
+    "mustard": "#b45309", "orange": "#f97316", "pink": "#f9a8d4",
+    "hot pink": "#ec4899", "fuchsia": "#d946ef", "rose": "#fb7185",
+    "purple": "#8b5cf6", "lavender": "#c4b5fd", "lilac": "#c084fc",
+    "violet": "#7c3aed", "silver": "#9ca3af", "gold": "#d97706",
+    "metallic": "#94a3b8", "denim": "#3b82f6", "indigo": "#4f46e5",
+    "coral": "#f87171", "teal": "#0d9488", "turquoise": "#06b6d4",
+    "charcoal": "#374151",
+}
+
+_LIGHT_COLORS = {"#f9fafb", "#fef3c7", "#f5f0e8", "#e8d5b0", "#93c5fd", "#c4b5fd", "#f9a8d4", "#6ee7b7"}
+
+
+def _color_dot(color_name: str) -> str:
+    """Return an HTML span with a small color swatch circle."""
+    key = color_name.lower().strip()
+    css = _COLOR_CSS.get(key, "")
+    if not css:
+        for k, v in _COLOR_CSS.items():
+            if k in key:
+                css = v
+                break
+    if not css:
+        return ""
+    border = " border: 1.5px solid rgba(0,0,0,.18);" if css in _LIGHT_COLORS else ""
+    return f'<span class="sf-color-dot" style="background:{css};{border}" title="{color_name.title()}"></span>'
+
+
 def format_product_card(product: dict) -> str:
     """
     Format a product as an HTML card
@@ -256,12 +298,13 @@ def format_results_html(result: dict) -> str:
 
     # ── Left: Analysis panel ───────────────────────────────────────────────
     html_parts.append('<div class="sf-analysis-panel">')
-    html_parts.append('<h3 class="sf-analysis-title">Fashion Analysis</h3>')
+    html_parts.append('<h3 class="sf-analysis-title">Outfit Breakdown</h3>')
 
     if fashion_data.get('items'):
         for item in fashion_data['items']:
             item_type = item.get("type", "Unknown").title()
-            item_color = item.get("color", "").title() if item.get("color") not in ("unknown", "", None) else ""
+            raw_color = item.get("color", "")
+            item_color = raw_color.title() if raw_color not in ("unknown", "", None) else ""
             item_display = f"{item_color} {item_type}".strip() if item_color else item_type
 
             extra_parts = []
@@ -275,12 +318,19 @@ def format_results_html(result: dict) -> str:
                 extra_parts.append(material.title())
             if fit and fit not in ("unknown", ""):
                 extra_parts.append(fit.title())
-            extra_line = " · ".join(extra_parts) if extra_parts else ""
+
+            dot_html = _color_dot(raw_color) if raw_color else ""
+            tags_html = "".join(
+                f'<span class="sf-chip-tag">{p}</span>' for p in extra_parts
+            )
 
             html_parts.append(f"""
             <div class="sf-item-chip">
-                <div class="sf-item-chip-name">{item_display}</div>
-                {f'<div class="sf-item-chip-meta">{extra_line}</div>' if extra_line else ''}
+                <div class="sf-chip-header">
+                    {dot_html}
+                    <span class="sf-item-chip-name">{item_display}</span>
+                </div>
+                {f'<div class="sf-chip-tags">{tags_html}</div>' if tags_html else ''}
                 {f'<div class="sf-item-chip-desc">{description}</div>' if description else ''}
             </div>
             """)
@@ -288,7 +338,7 @@ def format_results_html(result: dict) -> str:
     style_tips = get_style_tips(fashion_data.get('overall_style', ''), fashion_data.get('items', []))
     if style_tips:
         html_parts.append('<div class="sf-tips-section">')
-        html_parts.append('<h4 class="sf-tips-title">Style Tips</h4>')
+        html_parts.append('<h4 class="sf-tips-title">Stylist Notes</h4>')
         html_parts.append('<div class="sf-tips-scroll">')
         for tip in style_tips:
             if tip.strip():
@@ -341,7 +391,13 @@ def format_product_card_compact(product: dict) -> str:
     if image_url:
         img_html = f'<img src="{image_url}" alt="{display_name}" class="sf-card-img" onerror="this.style.display=\'none\'">'
     else:
-        img_html = '<div class="sf-card-img-placeholder">No Image</div>'
+        img_html = '''<div class="sf-card-img-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+        </div>'''
 
     badge_class = "sf-badge sf-badge-real" if not is_demo else "sf-badge sf-badge-demo"
     badge_label = f"{similarity_percent}% Match" if not is_demo else "Search Link"
@@ -489,12 +545,12 @@ def create_interface():
                             <div class="step-item" style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
                                 <div class="step-number" style="flex-shrink: 0; width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">2</div>
                                 <div>
-                                    <h4 class="step-title">Qwen2-VL Vision Analysis</h4>
-                                    <p class="step-description">Qwen2-VL-7B-Instruct — a state-of-the-art multimodal LLM — analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender.</p>
+                                    <h4 class="step-title">Groq Llama 4 Maverick Analysis</h4>
+                                    <p class="step-description">Groq Llama 4 Maverick (17B, 128 experts) analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM: Qwen2-VL-7B-Instruct (Alibaba/Qwen)</p>
-                                        <p class="info-text">A true vision-language model that reasons about images, not just captions them. Single structured JSON prompt — no multi-step guesswork.</p>
-                                        <p class="info-subtitle">Runs via HF Serverless Inference API</p>
+                                        <p class="info-title">VLM: meta-llama/llama-4-maverick-17b-128e-instruct</p>
+                                        <p class="info-text">Meta's best vision model — reasons about images with structured JSON output. No multi-step guesswork.</p>
+                                        <p class="info-subtitle">Runs via Groq LPU — free tier, no credit card needed</p>
                                     </div>
                                 </div>
                             </div>
@@ -549,7 +605,7 @@ def create_interface():
         <div class="sf-loading">
             <div class="sf-spinner"></div>
             <div class="sf-loading-text">Analyzing your outfit...</div>
-            <div class="sf-loading-sub">Qwen2-VL is identifying clothing items, colors, and style</div>
+            <div class="sf-loading-sub">Groq Llama 4 Maverick is identifying clothing items, colors, and style</div>
         </div>
         """
 

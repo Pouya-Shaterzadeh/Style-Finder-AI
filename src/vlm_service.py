@@ -1,7 +1,7 @@
 """
 Vision Language Model Service — Style Finder AI
 
-Uses Groq Llama 3.2 90B Vision for fashion image analysis:
+Uses Groq Llama 4 Maverick (17B, 128 experts) for fashion image analysis:
 - Free tier: ~14,400 req/day, no credit card required
 - Fast inference via Groq's LPU hardware
 - Single structured prompt → {gender, items[], overall_style, occasion}
@@ -143,7 +143,7 @@ Rules:
 
 class VLMService:
     """
-    Fashion image analysis using Groq Llama 3.2 90B Vision.
+    Fashion image analysis using Groq Llama 4 Maverick (17B, 128 experts).
 
     Groq runs inference on its LPU hardware — no local GPU needed.
     Free tier: ~14,400 req/day, 30 RPM.
