@@ -47,10 +47,35 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---- Gradio container override ----------------------------- */
+/* ---- Gradio container override — full viewport ------------ */
+html, body {
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+}
+
 .gradio-container {
     font-family: inherit !important;
-    max-width: 1400px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 0.5rem !important;
+}
+
+/* Gradio inner wrappers */
+.gradio-container > .main,
+.gradio-container .contain,
+.gradio-container .gap {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Remove default Gradio top padding */
+.gradio-container .main > .gap {
+    padding-top: 0 !important;
 }
 
 /* ============================================================
