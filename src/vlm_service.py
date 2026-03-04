@@ -216,15 +216,20 @@ Rules:
 
 class VLMService:
     """
-    Fashion image analysis using Qwen2-VL-7B-Instruct via HF Inference API.
+    Fashion image analysis using Qwen2-VL-7B-Instruct via HF Inference API,
+    with automatic fallback to locally cached LLaVA-1.5-7B when the API is
+    unavailable.
 
     Single structured prompt → JSON output → Turkish search queries.
-    No local model loading, no regex heuristics.
     """
+
+    LOCAL_MODEL = "llava-hf/llava-1.5-7b-hf"
 
     def __init__(self, model_name: str = VLM_MODEL_NAME):
         self.model_name = model_name
         self.client = None
+        self._local_model = None
+        self._local_processor = None
         self._setup_client()
 
     def _setup_client(self):
@@ -232,12 +237,36 @@ class VLMService:
         try:
             from huggingface_hub import InferenceClient
             if not HF_API_TOKEN:
-                logger.warning("HF_API_TOKEN not set — VLM calls will fail or be rate-limited")
-            self.client = InferenceClient(token=HF_API_TOKEN or None)
+                logger.warning("HF_API_TOKEN not set — will use local model only")
+            self.client = InferenceClient(
+                provider="hf-inference",
+                api_key=HF_API_TOKEN or None
+            )
             logger.info(f"✅ InferenceClient initialized for model: {self.model_name}")
         except ImportError:
             logger.error("huggingface_hub not installed. Run: pip install huggingface-hub>=0.23")
             self.client = None
+
+    def _load_local_model(self):
+        """Lazy-load LLaVA-1.5-7B from local cache as API fallback."""
+        if self._local_model is not None:
+            return True
+        try:
+            import torch
+            from transformers import LlavaForConditionalGeneration, AutoProcessor
+            logger.info(f"Loading local fallback model: {self.LOCAL_MODEL}")
+            self._local_processor = AutoProcessor.from_pretrained(self.LOCAL_MODEL)
+            self._local_model = LlavaForConditionalGeneration.from_pretrained(
+                self.LOCAL_MODEL,
+                torch_dtype=torch.float16,
+                device_map="auto",
+            )
+            self._local_model.eval()
+            logger.info(f"✅ Local VLM loaded: {self.LOCAL_MODEL}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load local VLM: {e}")
+            return False
 
     # ------------------------------------------------------------------
     # Public API
@@ -246,27 +275,27 @@ class VLMService:
     def analyze_fashion_image(self, image: Image.Image) -> Dict:
         """
         Analyze a fashion image and return structured attribute data.
-
-        Args:
-            image: PIL Image (already preprocessed)
-
-        Returns:
-            Dict with keys: items, gender, overall_style, occasion
+        Tries HF Inference API first; falls back to local LLaVA-1.5-7B.
         """
-        if self.client is None:
-            return self._empty_result("HF InferenceClient not available")
-
         image_b64_url = self._image_to_data_uri(image)
 
-        # Try primary model, then fallback
-        raw_text = self._call_vlm(image_b64_url, attempt=1)
+        # ── 1. Try HF API ──────────────────────────────────────────────
+        if self.client is not None:
+            raw_text = self._call_vlm(image_b64_url, attempt=1)
+            if raw_text is None:
+                logger.warning("Primary VLM call failed, retrying after delay...")
+                time.sleep(5)
+                raw_text = self._call_vlm(image_b64_url, attempt=2)
+        else:
+            raw_text = None
+
+        # ── 2. Fall back to local LLaVA ───────────────────────────────
         if raw_text is None:
-            logger.warning("Primary VLM call failed, retrying after delay...")
-            time.sleep(10)
-            raw_text = self._call_vlm(image_b64_url, attempt=2)
+            logger.info("API unavailable — falling back to local LLaVA-1.5-7B")
+            raw_text = self._call_local_vlm(image)
 
         if raw_text is None:
-            return self._empty_result("VLM API unavailable after retries. Check HF_API_TOKEN.")
+            return self._empty_result("Both API and local VLM failed. Check logs for details.")
 
         fashion_data = self._parse_vlm_json(raw_text)
         logger.info(f"✅ Detected {len(fashion_data.get('items', []))} items: "
@@ -336,46 +365,71 @@ class VLMService:
 
     def _call_vlm(self, image_data_uri: str, attempt: int = 1) -> Optional[str]:
         """
-        Send image + prompt to Qwen2-VL-7B-Instruct via chat_completion.
-
+        Send image + prompt to the configured model via HF chat completions.
         Returns raw text response or None on failure.
         """
         try:
-            logger.info(f"Calling VLM (attempt {attempt}): {self.model_name}")
-            response = self.client.chat_completion(
+            logger.info(f"Calling VLM API (attempt {attempt}): {self.model_name}")
+            resp = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": image_data_uri}
-                            },
-                            {
-                                "type": "text",
-                                "text": FASHION_ANALYSIS_PROMPT
-                            }
-                        ]
+                            {"type": "image_url", "image_url": {"url": image_data_uri}},
+                            {"type": "text", "text": FASHION_ANALYSIS_PROMPT},
+                        ],
                     }
                 ],
                 max_tokens=1024,
-                temperature=0.1,   # Low temp = factual, consistent output
+                temperature=0.1,
             )
-            text = response.choices[0].message.content
+            text = resp.choices[0].message.content
             logger.debug(f"VLM raw response: {text[:300]}...")
             return text
 
         except Exception as e:
-            err = str(e)
-            if "503" in err or "loading" in err.lower():
-                logger.warning(f"Model loading (503) on attempt {attempt}")
-            elif "429" in err or "rate" in err.lower():
-                logger.warning(f"Rate limited (429) on attempt {attempt}")
-            elif "401" in err or "unauthorized" in err.lower():
-                logger.error("Invalid HF_API_TOKEN — check your token")
-            else:
-                logger.error(f"VLM call failed: {e}")
+            full = repr(e)
+            logger.error(f"VLM API call failed (attempt {attempt}): type={type(e).__name__} | {full[:300]}")
+            return None
+
+    def _call_local_vlm(self, image: Image.Image) -> Optional[str]:
+        """
+        Run LLaVA-1.5-7B locally (GPU) as fallback when the API is down.
+        Model must be cached at ~/.cache/huggingface/hub/llava-hf/llava-1.5-7b-hf.
+        """
+        if not self._load_local_model():
+            return None
+        try:
+            import torch
+
+            # LLaVA-1.5 prompt format
+            prompt = f"USER: <image>\n{FASHION_ANALYSIS_PROMPT}\nASSISTANT:"
+
+            inputs = self._local_processor(
+                text=prompt,
+                images=[image],
+                return_tensors="pt",
+            ).to(self._local_model.device)
+
+            with torch.no_grad():
+                output_ids = self._local_model.generate(
+                    **inputs,
+                    max_new_tokens=768,
+                    temperature=0.1,
+                    do_sample=False,
+                )
+
+            full_text = self._local_processor.decode(
+                output_ids[0], skip_special_tokens=True
+            )
+            # Extract everything after "ASSISTANT:"
+            response = full_text.split("ASSISTANT:")[-1].strip()
+            logger.info(f"Local VLM response: {response[:200]}...")
+            return response
+
+        except Exception as e:
+            logger.error(f"Local VLM inference failed: {e}")
             return None
 
     def _parse_vlm_json(self, raw_text: str) -> Dict:
