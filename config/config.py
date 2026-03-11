@@ -15,12 +15,12 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# VLM — Groq Llama 4 Maverick 17B (128 experts) — best free vision model
+# VLM — GPT OSS 120B on GroqCloud
 # Free tier: no credit card required
 # Get a free key at: https://console.groq.com
 # ---------------------------------------------------------------------------
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = "meta-llama/llama-4-maverick-17b-128e-instruct"
+GROQ_MODEL   = "openai/gpt-oss-120b"
 
 if GROQ_API_KEY:
     print(f"✓ Groq API key loaded (starts with: {GROQ_API_KEY[:8]}...)")

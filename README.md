@@ -16,7 +16,7 @@ Upload a fashion photo → get AI analysis + matching products from Trendyol.
 ## How It Works
 
 1. **Upload** a clear fashion photo (outfit, street style, lookbook, etc.)
-2. **Groq Llama 4 Maverick** analyzes the image — detects clothing items, colors, patterns, materials, fit, gender, and overall style. Returns structured JSON in a single API call.
+2. **GPT OSS 120B** analyzes the image — detects clothing items, colors, patterns, materials, fit, gender, and overall style. Returns structured JSON in a single API call.
 3. **Turkish search queries** are generated from the analysis (e.g. "Kadın Lacivert Slim Jean")
 4. **Trendyol's internal JSON API** is queried — real listings with prices, images, and product pages
 5. **fashion-CLIP** (trained on 800K+ fashion image-text pairs) scores each result by text-image cosine similarity
@@ -26,7 +26,7 @@ Upload a fashion photo → get AI analysis + matching products from Trendyol.
 
 | Layer | Model / Tool |
 |---|---|
-| Vision Language Model | Groq Llama 4 Maverick 17B (meta-llama/llama-4-maverick-17b-128e-instruct) |
+| Vision Language Model | GPT OSS 120B (openai/gpt-oss-120b) |
 | Fashion Similarity | patrickjohncyh/fashion-clip |
 | Product Search | Trendyol Internal JSON API |
 | UI Framework | Gradio 6 |

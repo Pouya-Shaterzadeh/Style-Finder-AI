@@ -359,10 +359,10 @@ def create_interface():
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
                                 <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">2</div>
                                 <div>
-                                    <h4 class="step-title">Groq Llama 4 Maverick Analysis</h4>
-                                    <p class="step-description">Groq Llama 4 Maverick (17B, 128 experts) analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
+                                    <h4 class="step-title">GPT OSS 120B Analysis</h4>
+                                    <p class="step-description">GPT OSS 120B analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM: meta-llama/llama-4-maverick-17b-128e-instruct</p>
+                                        <p class="info-title">VLM: openai/gpt-oss-120b</p>
                                         <p class="info-text">Meta's best vision model — reasons about images with structured JSON output. No multi-step guesswork.</p>
                                         <p class="info-subtitle">Runs via Groq LPU — free tier, no credit card needed</p>
                                     </div>
@@ -414,7 +414,7 @@ def create_interface():
         <div class="sf-loading">
             <div class="sf-spinner"></div>
             <div class="sf-loading-text">Analyzing your outfit...</div>
-            <div class="sf-loading-sub">Groq Llama 4 Maverick is identifying clothing items, colors, and style</div>
+            <div class="sf-loading-sub">GPT OSS 120B is identifying clothing items, colors, and style</div>
         </div>
         """
 

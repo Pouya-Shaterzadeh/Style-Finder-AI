@@ -1,7 +1,7 @@
 """
 Vision Language Model Service — Style Finder AI
 
-Uses Groq Llama 4 Maverick (17B, 128 experts) for fashion image analysis:
+Uses GPT OSS 120B on GroqCloud for fashion image analysis:
 - Free tier: ~14,400 req/day, no credit card required
 - Fast inference via Groq's LPU hardware
 - Single structured prompt → {gender, items[], overall_style, occasion}
@@ -149,7 +149,7 @@ Rules:
 
 class VLMService:
     """
-    Fashion image analysis using Groq Llama 4 Maverick (17B, 128 experts).
+    Fashion image analysis using GPT OSS 120B on GroqCloud.
 
     Groq runs inference on its LPU hardware — no local GPU needed.
     Free tier: ~14,400 req/day, 30 RPM.
@@ -180,7 +180,7 @@ class VLMService:
 
     def analyze_fashion_image(self, image: Image.Image) -> Dict:
         """
-        Analyze a fashion image with Groq Llama 4 Maverick.
+        Analyze a fashion image with GPT OSS 120B on GroqCloud.
         Returns structured dict: {gender, items[], overall_style, occasion, stylist_notes[]}
         """
         if self.client is None:
@@ -267,7 +267,7 @@ class VLMService:
 
     def _call_groq(self, image_bytes: bytes, attempt: int = 1) -> Optional[str]:
         """
-        Call Groq Llama 4 Maverick with the image and fashion prompt.
+        Call GPT OSS 120B via the Groq API with the image and fashion prompt.
         Image is sent as a base64-encoded data URI.
         Returns raw response text or None on failure.
         """
