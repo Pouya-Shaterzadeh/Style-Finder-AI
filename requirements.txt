@@ -3,7 +3,7 @@ gradio>=6.2.0
 pillow>=10.0.0
 numpy>=1.24.0
 
-# VLM — GPT OSS 120B via GroqCloud (API call, no local model download)
+# VLM — Llama 4 Scout 17B via GroqCloud (API call, no local model download)
 groq>=0.13.0
 
 # Visual similarity — patrickjohncyh/fashion-clip (runs on HF Spaces CPU)

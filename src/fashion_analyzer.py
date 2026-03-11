@@ -59,8 +59,8 @@ class FashionAnalyzer:
             # Step 1: Preprocess image
             processed_image = self.image_processor.preprocess_image(image)
 
-            # Step 2: Analyze fashion with GPT OSS 120B
-            print("Analyzing fashion image with GPT OSS 120B...")
+            # Step 2: Analyze fashion with Llama 4 Scout
+            print("Analyzing fashion image with Llama 4 Scout...")
             fashion_data = self.vlm_service.analyze_fashion_image(processed_image)
             result['fashion_analysis'] = fashion_data
 
