@@ -35,12 +35,72 @@ Upload a fashion photo → get AI analysis + matching products from Trendyol.
 | UI Framework | Gradio 6 |
 | Hosting | Hugging Face Spaces (CPU) |
 
-## Environment Secrets (HF Spaces Settings → Secrets)
+## Environment Variables
 
-| Secret | Required | Description |
+| Variable | Required | Description |
 |---|---|---|
 | `GROQ_API_KEY` | **Yes** | Free key from [console.groq.com](https://console.groq.com) |
 | `HF_API_TOKEN` | Optional | For faster fashion-CLIP model download |
+
+On **Hugging Face Spaces** add these under *Settings → Secrets*.
+For **local development** see the section below.
+
+## Local Development
+
+### Option A — Python virtual environment (recommended for development)
+
+```bash
+# 1. Clone
+git clone https://github.com/Pouya-Shaterzadeh/Style-Finder-AI.git
+cd Style-Finder-AI
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Set up environment variables
+cp .env.example .env
+#    Open .env and fill in GROQ_API_KEY (required)
+
+# 5. Run
+python app.py
+```
+
+The app will start at **http://localhost:7860**.
+
+> **First run note:** fashion-CLIP (~600 MB) is downloaded automatically on startup
+> and cached under `~/.cache/huggingface/`. Subsequent starts are instant.
+
+---
+
+### Option B — Docker Compose (zero-setup, mirrors production)
+
+```bash
+# 1. Clone
+git clone https://github.com/Pouya-Shaterzadeh/Style-Finder-AI.git
+cd Style-Finder-AI
+
+# 2. Set up environment variables
+cp .env.example .env
+#    Open .env and fill in GROQ_API_KEY (required)
+
+# 3. Build and start
+docker compose up --build
+```
+
+The app will be available at **http://localhost:7860**.
+
+| Useful commands | |
+|---|---|
+| `docker compose up --build` | First-time build and start |
+| `docker compose up` | Start (after first build) |
+| `docker compose down` | Stop and remove containers |
+| `docker compose logs -f` | Follow live logs |
+
+Model weights are cached in a named Docker volume (`hf_cache`) so they survive container restarts.
 
 ## Tips for Best Results
 

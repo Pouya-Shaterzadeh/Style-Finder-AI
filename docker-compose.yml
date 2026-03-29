@@ -1,0 +1,29 @@
+# Style Finder AI — Docker Compose (localhost)
+# -----------------------------------------------
+# Start:  docker compose up --build
+# Stop:   docker compose down
+# Logs:   docker compose logs -f
+#
+# The app will be available at http://localhost:7860
+# -----------------------------------------------
+
+services:
+  app:
+    build: .
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+    volumes:
+      # Mount source code so edits are reflected without a full rebuild
+      - .:/app
+      # Cache Hugging Face model weights between restarts
+      - hf_cache:/root/.cache/huggingface
+    restart: unless-stopped
+
+volumes:
+  hf_cache:
