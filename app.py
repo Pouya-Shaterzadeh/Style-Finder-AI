@@ -151,6 +151,7 @@ def format_product_card_compact(product: dict) -> str:
     price_text       = product.get('price_text', '')
     similarity_score = product.get('similarity_score', 0.0)
     similarity_percent = int(similarity_score * 100)
+    visual_score     = product.get('visual_similarity_score')
     is_demo          = product.get('is_demo', False)
 
     # Clean display name — no truncation
@@ -158,7 +159,13 @@ def format_product_card_compact(product: dict) -> str:
 
     img_html   = f'<img src="{image_url}" alt="{display_name}" class="sf-card-img" onerror="this.style.display=\'none\'">' if image_url else ''
     badge_class = "sf-badge sf-badge-real" if not is_demo else "sf-badge sf-badge-demo"
-    badge_label = f"{similarity_percent}% Match" if not is_demo else "Search Link"
+    if is_demo:
+        badge_label = "Search Link"
+    elif visual_score is not None:
+        visual_percent = int(visual_score * 100)
+        badge_label = f"{similarity_percent}% Match · {visual_percent}% Visual"
+    else:
+        badge_label = f"{similarity_percent}% Match"
     brand_html  = f'<div class="sf-card-brand">{brand}</div>' if brand else ''
     price_html  = f'<div class="sf-card-price">{price_text}</div>' if price_text else ''
 

@@ -23,6 +23,9 @@ from config.config import (
     TRENDYOL_JSON_API_URL,
     MAX_SEARCH_RESULTS,
     REQUEST_DELAY,
+    VISUAL_SIMILARITY_WEIGHT,
+    TEXT_SIMILARITY_WEIGHT,
+    DEFAULT_SIMILARITY_SCORE,
 )
 from src.image_processor import ImageProcessor
 
@@ -93,33 +96,65 @@ class TrendyolScraper:
         fashion_data: Dict,
     ) -> Dict:
         """
-        Attach a similarity score to a product using text-image CLIP similarity.
+        Attach a combined visual + text similarity score to a product.
 
-        Instead of downloading each product thumbnail (slow, unreliable),
-        we compare the user's uploaded image against the search query text
-        using fashion-CLIP. Products from the same query get the same score.
+        Visual similarity (70% weight): cosine similarity between the
+        user's uploaded image embedding and the product's thumbnail embedding
+        (image-to-image CLIP comparison).
+
+        Text similarity (30% weight): cosine similarity between the user's
+        uploaded image embedding and the search-query text embedding
+        (image-to-text CLIP comparison).
+
+        When no product image is available the score falls back to text
+        similarity only.
 
         Args:
-            product: Product dict from search_products()
-            user_image: Preprocessed PIL Image from user
+            product:      Product dict from search_products()
+            user_image:   Preprocessed PIL Image from user
             fashion_data: VLM output (used for query reconstruction)
 
         Returns:
-            Product dict with 'similarity_score' set
+            Product dict with 'similarity_score' and (when available)
+            'visual_similarity_score' set.
         """
         if product.get("similarity_score", 0.0) > 0:
             return product  # Score already set (e.g. fallback products)
 
+        # ── Text similarity: user image ↔ search-query text ────────────────
         query = product.get("_query", "")
+        text_score = DEFAULT_SIMILARITY_SCORE
         if query and user_image is not None:
             try:
-                score = self.image_processor.get_text_image_similarity(user_image, query)
-                product["similarity_score"] = score
+                text_score = self.image_processor.get_text_image_similarity(
+                    user_image, query
+                )
             except Exception as e:
-                print(f"Similarity scoring failed: {e}")
-                product["similarity_score"] = 0.5
+                print(f"Text similarity scoring failed: {e}")
+
+        # ── Visual similarity: user image ↔ product thumbnail ──────────────
+        image_url = product.get("image_url", "")
+        visual_score = None
+        if image_url and user_image is not None:
+            try:
+                product_image = self.image_processor.load_image_from_url(image_url)
+                if product_image is not None:
+                    visual_score = self.image_processor.compare_images(
+                        user_image, product_image
+                    )
+            except Exception as e:
+                print(f"Visual similarity scoring failed: {e}")
+
+        # ── Combine scores ──────────────────────────────────────────────────
+        if visual_score is not None:
+            product["visual_similarity_score"] = visual_score
+            product["similarity_score"] = (
+                VISUAL_SIMILARITY_WEIGHT * visual_score
+                + TEXT_SIMILARITY_WEIGHT * text_score
+            )
         else:
-            product["similarity_score"] = 0.5
+            # Fallback: no product image available — use text score only
+            product["similarity_score"] = text_score
 
         return product
 

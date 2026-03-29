@@ -64,9 +64,10 @@ CONFIDENCE_THRESHOLD = 0.3
 # ---------------------------------------------------------------------------
 # Matching
 # ---------------------------------------------------------------------------
-VISUAL_SIMILARITY_WEIGHT = 0.6
-TEXT_SIMILARITY_WEIGHT   = 0.4
+VISUAL_SIMILARITY_WEIGHT = 0.7
+TEXT_SIMILARITY_WEIGHT   = 0.3
 MIN_SIMILARITY_SCORE     = 0.25
+DEFAULT_SIMILARITY_SCORE = 0.5  # Neutral fallback when embeddings are unavailable
 
 # ---------------------------------------------------------------------------
 # UI

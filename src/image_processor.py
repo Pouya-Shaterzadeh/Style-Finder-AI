@@ -18,7 +18,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config.config import IMAGE_SIZE, MAX_IMAGE_SIZE, DEVICE, CLIP_MODEL_NAME
+from config.config import IMAGE_SIZE, MAX_IMAGE_SIZE, DEVICE, CLIP_MODEL_NAME, DEFAULT_SIMILARITY_SCORE
 
 try:
     from transformers import CLIPProcessor, CLIPModel
@@ -35,6 +35,7 @@ class ImageProcessor:
         self.device = device
         self.clip_model = None
         self.clip_processor = None
+        self._embedding_cache: dict = {}  # Cache image embeddings by object id
         self._load_clip()
 
     def _load_clip(self):
@@ -84,18 +85,27 @@ class ImageProcessor:
         """
         Get normalized fashion-CLIP image embedding.
 
+        Results are cached by image object identity so that the same image
+        (e.g. the user's uploaded photo compared against many product images)
+        is only embedded once per session.
+
         Returns:
             1-D float32 array of shape (512,) or None on failure.
         """
         if self.clip_model is None:
             return None
+        cache_key = id(image)
+        if cache_key in self._embedding_cache:
+            return self._embedding_cache[cache_key]
         try:
-            image = self.preprocess_image(image)
-            inputs = self.clip_processor(images=image, return_tensors="pt").to(self.device)
+            processed = self.preprocess_image(image)
+            inputs = self.clip_processor(images=processed, return_tensors="pt").to(self.device)
             with torch.no_grad():
                 feats = self.clip_model.get_image_features(**inputs)
                 feats = feats / feats.norm(dim=-1, keepdim=True)
-            return feats.cpu().numpy().flatten()
+            embedding = feats.cpu().numpy().flatten()
+            self._embedding_cache[cache_key] = embedding
+            return embedding
         except Exception as e:
             print(f"Error generating image embedding: {e}")
             return None
@@ -155,7 +165,7 @@ class ImageProcessor:
         img_emb = self.get_image_embedding(image)
         txt_emb = self.get_text_embedding(text)
         if img_emb is None or txt_emb is None:
-            return 0.5  # Neutral score when embeddings unavailable
+            return DEFAULT_SIMILARITY_SCORE  # Neutral score when embeddings unavailable
         return self._cosine_to_score(img_emb, txt_emb)
 
     def cosine_similarity(self,
