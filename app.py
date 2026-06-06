@@ -172,7 +172,7 @@ def format_product_card_compact(product: dict) -> str:
                 {price_html}
                 <div class="sf-card-footer">
                     <span class="{badge_class}">{badge_label}</span>
-                    <span class="sf-card-cta">View →</span>
+                    <span class="sf-card-cta">Shop on Trendyol →</span>
                 </div>
             </div>
         </a>
@@ -289,31 +289,22 @@ def create_interface():
 
         # ── Header ────────────────────────────────────────────────────────
         gr.HTML("""
-        <div style="text-align: center; padding: 2rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: -1rem -1rem 2rem -1rem; border-radius: 0 0 24px 24px; box-shadow: 0 10px 30px rgba(102,126,234,0.3); position: relative; overflow: hidden;">
-            <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: sf-rotate 20s linear infinite; pointer-events: none;"></div>
-            <div style="position: relative; z-index: 1;">
-                <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.2); letter-spacing: -0.5px;">Style Finder AI</h1>
-                <p style="margin: 0.75rem 0 0 0; color: rgba(255,255,255,0.95); font-size: 1.1rem; font-weight: 500;">AI-Powered Fashion Discovery • Find Matching Pieces on Trendyol</p>
+        <header class="sf-header">
+            <div class="sf-header-inner">
+                <div class="sf-header-accent-line"></div>
+                <h1>Style Finder<em> AI</em></h1>
+                <p class="sf-header-tagline">AI-Powered Fashion Discovery · Find Matching Pieces on Trendyol</p>
             </div>
-            <!-- Dark/light toggle — fully inline onclick so Gradio script sandboxing can't break it -->
-            <button id="sf-theme-toggle" title="Toggle dark/light mode"
-                onclick="var h=document.documentElement,d=h.classList.contains('dark');d?(h.classList.remove('dark'),h.removeAttribute('data-theme'),this.textContent='🌙'):(h.classList.add('dark'),h.setAttribute('data-theme','dark'),this.textContent='☀️');try{localStorage.setItem('sf-theme',d?'light':'dark')}catch(e){}"
-                style="position:fixed;top:4.5rem;right:1.25rem;background:rgba(102,126,234,.85);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:50%;width:40px;height:40px;font-size:1.15rem;cursor:pointer;backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;transition:background .2s;box-shadow:0 4px 12px rgba(0,0,0,.25);">
-                🌙
-            </button>
-            <style>
-                @keyframes sf-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-            </style>
-        </div>
+        </header>
         """)
 
         # ── Main layout ───────────────────────────────────────────────────
-        with gr.Row():
+        with gr.Row(elem_classes=["sf-main-row"]):
 
             # Left: upload + button + analysis panel
             with gr.Column(scale=3, min_width=600):
                 with gr.Row():
-                    with gr.Column(scale=1, min_width=340):
+                    with gr.Column(scale=1, min_width=340, elem_classes=["sf-upload-col"]):
                         image_input = gr.Image(
                             type="pil",
                             label="Upload Fashion Image",
@@ -336,8 +327,9 @@ def create_interface():
                         results_output = gr.HTML(
                             value="""
                             <div class='sf-ready'>
+                                <div class='sf-ready-icon'>✦</div>
                                 <div class='sf-ready-title'>Ready to Analyze</div>
-                                <div class='sf-ready-sub'>Upload a fashion image and click Analyze to discover matching products on Trendyol</div>
+                                <div class='sf-ready-sub'>Upload a fashion image and click Analyze to discover curated matching pieces on Trendyol</div>
                             </div>
                             """,
                             elem_classes=["analysis-results"],
@@ -350,14 +342,14 @@ def create_interface():
                     <div class="how-it-works-content" style="padding: 1rem 0;">
                         <div style="margin-bottom: 2rem;">
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
-                                <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">1</div>
+                                <div class="step-number">1</div>
                                 <div>
                                     <h4 class="step-title">Upload Your Image</h4>
                                     <p class="step-description">Upload a clear photo of the outfit you want to find matching pieces for.</p>
                                 </div>
                             </div>
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
-                                <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">2</div>
+                                <div class="step-number">2</div>
                                 <div>
                                     <h4 class="step-title">Llama 4 Scout Analysis</h4>
                                     <p class="step-description">Llama 4 Scout 17B analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
@@ -369,14 +361,14 @@ def create_interface():
                                 </div>
                             </div>
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
-                                <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">3</div>
+                                <div class="step-number">3</div>
                                 <div>
                                     <h4 class="step-title">Smart Turkish Query Generation</h4>
                                     <p class="step-description">VLM-extracted attributes are translated to Turkish and combined into precise Trendyol search queries (e.g. "Kadın Lacivert Slim Jean").</p>
                                 </div>
                             </div>
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
-                                <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">4</div>
+                                <div class="step-number">4</div>
                                 <div>
                                     <h4 class="step-title">Trendyol JSON API Search</h4>
                                     <p class="step-description">Queries Trendyol's internal product search API for real listings — actual prices, images, and product pages. No scraping, no bot detection.</p>
@@ -390,7 +382,7 @@ def create_interface():
                                 </div>
                             </div>
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;">
-                                <div class="step-number" style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;">5</div>
+                                <div class="step-number">5</div>
                                 <div>
                                     <h4 class="step-title">Shop on Trendyol</h4>
                                     <p class="step-description">Click any product card to view the real listing on Trendyol.com with accurate price, brand, and availability.</p>
@@ -413,8 +405,9 @@ def create_interface():
         LOADING_HTML = """
         <div class="sf-loading">
             <div class="sf-spinner"></div>
-            <div class="sf-loading-text">Analyzing your outfit...</div>
+            <div class="sf-loading-text">Analyzing your outfit</div>
             <div class="sf-loading-sub">Llama 4 Scout is identifying clothing items, colors, and style</div>
+            <div class="sf-loading-bar"></div>
         </div>
         """
 
@@ -454,6 +447,22 @@ if __name__ == "__main__":
         server_port=7860,
         share=False,
         show_error=True,
-        theme=gr.themes.Soft(),
+        theme=gr.themes.Base(
+            primary_hue="amber",
+            neutral_hue="stone",
+        ).set(
+            body_background_fill="#0C0C0C",
+            body_background_fill_dark="#0C0C0C",
+            block_background_fill="#181818",
+            block_background_fill_dark="#181818",
+            block_border_color="#2A2A2A",
+            block_border_color_dark="#2A2A2A",
+            body_text_color="#F5F0E8",
+            body_text_color_dark="#F5F0E8",
+            button_primary_background_fill="linear-gradient(135deg, #C9A96E 0%, #A88B4A 100%)",
+            button_primary_background_fill_dark="linear-gradient(135deg, #C9A96E 0%, #A88B4A 100%)",
+            button_primary_text_color="#0C0C0C",
+            button_primary_text_color_dark="#0C0C0C",
+        ),
         css=custom_css,
     )
