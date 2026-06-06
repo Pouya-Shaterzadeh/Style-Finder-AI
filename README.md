@@ -1,6 +1,3 @@
-https://github.com/user-attachments/assets/3b5a8cab-8fdf-461b-91f2-6e800102f825
-
-
 ---
 title: Style Finder AI
 emoji: 👗
@@ -11,6 +8,9 @@ sdk_version: "6.2.0"
 app_file: app.py
 pinned: false
 ---
+
+https://github.com/user-attachments/assets/3b5a8cab-8fdf-461b-91f2-6e800102f825
+
 
 # Style Finder AI — Fashion Analysis & Product Discovery
 
