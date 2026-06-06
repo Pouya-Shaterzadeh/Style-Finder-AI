@@ -9,7 +9,9 @@ app_file: app.py
 pinned: false
 ---
 
-https://github.com/user-attachments/assets/3b5a8cab-8fdf-461b-91f2-6e800102f825
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/2dc30367-e0b5-4494-9c43-5f43355e8010" />
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/54bb922d-b6ee-40c6-9157-a4d5a4d72710" />
+
 
 
 # Style Finder AI — Fashion Analysis & Product Discovery
