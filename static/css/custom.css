@@ -229,7 +229,7 @@ label span,
 
 .sf-products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1.25rem;
 }
 
@@ -301,6 +301,7 @@ label span,
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     margin-top: 8px;
     gap: 0.5rem;
 }
