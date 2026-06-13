@@ -2,7 +2,6 @@
 import pytest
 from prompts import (
     FASHION_ANALYSIS,
-    JUDGE_PROMPT,
     VERSION,
     get_prompt,
 )
@@ -18,16 +17,10 @@ class TestPromptStructure:
         assert "max_tokens" in FASHION_ANALYSIS
         assert "prompt" in FASHION_ANALYSIS
 
-    def test_judge_prompt_has_required_fields(self):
-        assert "version" in JUDGE_PROMPT
-        assert "name" in JUDGE_PROMPT
-        assert "system" in JUDGE_PROMPT
-
 
 class TestPromptVersioning:
     def test_all_prompts_same_version(self):
         assert FASHION_ANALYSIS["version"] == VERSION
-        assert JUDGE_PROMPT["version"] == VERSION
 
     def test_version_is_string(self):
         assert isinstance(VERSION, str)
@@ -66,10 +59,6 @@ class TestGetPrompt:
     def test_get_fashion_analysis(self):
         prompt = get_prompt("fashion_analysis")
         assert prompt == FASHION_ANALYSIS
-
-    def test_get_judge_prompt(self):
-        prompt = get_prompt("fashion_analysis_judge")
-        assert prompt == JUDGE_PROMPT
 
     def test_get_unknown_prompt_raises(self):
         with pytest.raises(ValueError, match="Unknown prompt"):

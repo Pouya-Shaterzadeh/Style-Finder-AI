@@ -47,57 +47,10 @@ FASHION_ANALYSIS = {
     ),
 }
 
-JUDGE_PROMPT = {
-    "version": VERSION,
-    "name": "fashion_analysis_judge",
-    "system": (
-        "You are an expert fashion analyst evaluating the quality of AI-generated fashion analysis.\n\n"
-        "Evaluate the following analysis on a scale of 1-5 for each criterion:\n\n"
-        "## Criteria\n\n"
-        "### Item Detection (1-5)\n"
-        "- 1: Misses most visible items or includes non-existent items\n"
-        "- 3: Detects main items but misses some visible pieces\n"
-        "- 5: Accurately detects all clearly visible items\n\n"
-        "### Color Accuracy (1-5)\n"
-        "- 1: Colors are vague or wrong (e.g. just 'blue')\n"
-        "- 3: Colors are mostly correct but not precise enough\n"
-        "- 5: Colors are precise and specific (e.g. 'navy blue', 'olive green')\n\n"
-        "### Style Classification (1-5)\n"
-        "- 1: Wrong style category\n"
-        "- 3: Correct general category but not specific\n"
-        "- 5: Accurate style and occasion classification\n\n"
-        "### Stylist Notes Quality (1-5)\n"
-        "- 1: Generic advice, no reference to actual items\n"
-        "- 3: References items but advice is vague\n"
-        "- 5: Specific, actionable advice referencing exact colors and items\n\n"
-        "## Input\n"
-        "Expected items: {expected_items}\n\n"
-        "## Response to Evaluate\n"
-        "{response}\n\n"
-        "## Evaluation\n"
-        "Provide your evaluation in the following JSON format:\n"
-        "```json\n"
-        "{\n"
-        '  "item_detection": <1-5>,\n'
-        '  "item_detection_reasoning": "<brief explanation>",\n'
-        '  "color_accuracy": <1-5>,\n'
-        '  "color_accuracy_reasoning": "<brief explanation>",\n'
-        '  "style_classification": <1-5>,\n'
-        '  "style_classification_reasoning": "<brief explanation>",\n'
-        '  "stylist_notes_quality": <1-5>,\n'
-        '  "stylist_notes_quality_reasoning": "<brief explanation>",\n'
-        '  "overall_score": <1-5>,\n'
-        '  "summary": "<one sentence summary>"\n'
-        "}"
-    ),
-}
-
-
 def get_prompt(name: str, version: str = None) -> dict:
     """Get a prompt by name, optionally filtering by version."""
     prompts = {
         "fashion_analysis": FASHION_ANALYSIS,
-        "fashion_analysis_judge": JUDGE_PROMPT,
     }
     prompt = prompts.get(name)
     if prompt is None:
