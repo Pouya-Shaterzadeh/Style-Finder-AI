@@ -761,35 +761,45 @@ label span,
 }
 
 @media (max-width: 1024px) {
-    .sf-results-grid {
-        gap: 2rem;
-    }
-
+    .sf-main-row { flex-direction: column !important; }
+    .sf-main-row > .gr-column { min-width: 0 !important; max-width: 100% !important; }
+    .sf-results-grid { gap: 2rem; }
     .sf-analysis-panel { position: static; max-width: 100%; }
+    .sf-upload-col { min-width: 0 !important; }
 }
 
 @media (max-width: 768px) {
-    .sf-main-row { padding: 0 1.25rem 2.5rem !important; gap: 2rem !important; }
-
-    .sf-header { padding: 2.5rem 1.25rem 2rem; margin-bottom: 1.5rem; }
-
-    .sf-products-grid {
-        gap: 0.85rem;
-    }
-
-    .sf-products-title { font-size: 1.35rem; }
-    .sf-card-img { height: 160px; }
-    .sf-card-body { padding: 0.8rem; }
-    .sf-card-name { font-size: 0.85rem; }
-
-    .sf-chip-tags { gap: 0.3rem; }
-    .sf-chip-tag  { font-size: 0.6rem; padding: 2px 7px; }
+    .sf-main-row { padding: 0 1rem 2rem !important; gap: 1.5rem !important; }
+    .sf-header { padding: 2rem 1rem 1.5rem; margin-bottom: 1rem; }
+    .sf-header h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); }
+    .sf-header-tagline { font-size: 0.75rem; }
+    .sf-products-grid { gap: 0.75rem; }
+    .sf-products-title { font-size: 1.2rem; }
+    .sf-card-img { height: 140px; }
+    .sf-card-body { padding: 0.65rem; }
+    .sf-card-name { font-size: 0.8rem; }
+    .sf-card-price { font-size: 0.9rem; }
+    .sf-chip-tags { gap: 0.25rem; }
+    .sf-chip-tag { font-size: 0.55rem; padding: 2px 6px; }
+    .sf-results-grid { flex-direction: column; gap: 1.5rem; }
+    .sf-analysis-panel { max-width: 100%; }
+    .how-it-works-sidebar { min-width: 0 !important; }
 }
 
-@media (max-width: 400px) {
-    .sf-products-grid { grid-template-columns: 1fr !important; }
+@media (max-width: 480px) {
+    .sf-main-row { padding: 0 0.75rem 1.5rem !important; gap: 1rem !important; }
+    .sf-header { padding: 1.5rem 0.75rem 1rem; }
+    .sf-header h1 { font-size: 1.6rem; }
+    .sf-header-tagline { font-size: 0.65rem; }
+    .sf-products-grid { grid-template-columns: 1fr !important; gap: 0.6rem; }
+    .sf-card { flex-direction: column; }
+    .sf-card-img { height: 200px; }
+    .sf-card-body { padding: 0.6rem; }
+    .sf-card-name { font-size: 0.78rem; }
+    .sf-card-brand { font-size: 0.65rem; }
+    .btn-primary { width: 100%; padding: 0.8rem; }
 }
 
 @media (min-width: 401px) and (max-width: 540px) {
-    .sf-products-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .sf-products-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }

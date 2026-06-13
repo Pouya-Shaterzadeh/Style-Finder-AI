@@ -302,9 +302,9 @@ def create_interface():
         with gr.Row(elem_classes=["sf-main-row"]):
 
             # Left: upload + button + analysis panel
-            with gr.Column(scale=3, min_width=600):
+            with gr.Column(scale=3, min_width=0):
                 with gr.Row():
-                    with gr.Column(scale=1, min_width=340, elem_classes=["sf-upload-col"]):
+                    with gr.Column(scale=1, min_width=0, elem_classes=["sf-upload-col"]):
                         image_input = gr.Image(
                             type="pil",
                             label="Upload Fashion Image",
@@ -323,7 +323,7 @@ def create_interface():
                             visible=False,
                         )
 
-                    with gr.Column(scale=2, min_width=480):
+                    with gr.Column(scale=2, min_width=0):
                         results_output = gr.HTML(
                             value="""
                             <div class='sf-ready'>
@@ -336,7 +336,7 @@ def create_interface():
                         )
 
             # Right: How It Works sidebar
-            with gr.Column(scale=1, min_width=300):
+            with gr.Column(scale=1, min_width=0):
                 with gr.Accordion("How It Works", open=False, elem_classes=["how-it-works-sidebar"]):
                     gr.HTML("""
                     <div class="how-it-works-content" style="padding: 1rem 0;">
