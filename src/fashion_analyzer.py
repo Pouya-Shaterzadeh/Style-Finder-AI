@@ -7,6 +7,7 @@ from typing import Dict, List
 from PIL import Image
 import sys
 import os
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.vlm_service import VLMService
@@ -18,6 +19,8 @@ from config.config import (
     MIN_SIMILARITY_SCORE,
     MAX_RESULTS_DISPLAY,
 )
+from prompts import VERSION as PROMPT_VERSION
+from tracing import trace_fashion_analysis, log_search_call, log_clip_scoring, _image_hash
 
 
 class FashionAnalyzer:
@@ -56,70 +59,113 @@ class FashionAnalyzer:
         }
 
         try:
-            # Step 1: Preprocess image
-            processed_image = self.image_processor.preprocess_image(image)
+            # Convert image to bytes for tracing
+            from io import BytesIO
+            buf = BytesIO()
+            image.save(buf, format="JPEG", quality=90)
+            image_bytes = buf.getvalue()
 
-            # Step 2: Analyze fashion with Llama 4 Scout
-            print("Analyzing fashion image with Llama 4 Scout...")
-            fashion_data = self.vlm_service.analyze_fashion_image(processed_image)
-            result['fashion_analysis'] = fashion_data
+            with trace_fashion_analysis(image_bytes, PROMPT_VERSION) as trace:
+                # Step 1: Preprocess image
+                processed_image = self.image_processor.preprocess_image(image)
 
-            if fashion_data.get('error') and not fashion_data.get('items'):
-                result['error'] = fashion_data['error']
-                return result
+                # Step 2: Analyze fashion with Llama 4 Scout
+                print("Analyzing fashion image with Llama 4 Scout...")
+                vlm_start = time.monotonic()
+                fashion_data = self.vlm_service.analyze_fashion_image(processed_image)
+                vlm_latency = int((time.monotonic() - vlm_start) * 1000)
 
-            if not fashion_data.get('items'):
-                result['error'] = (
-                    "No clothing items were detected. "
-                    "Please upload a clearer photo with good lighting where clothing is clearly visible."
-                )
-                return result
-
-            # Step 3: Generate Turkish search queries from VLM output
-            search_queries = self.vlm_service.get_search_queries(fashion_data)
-
-            if not search_queries:
-                result['error'] = (
-                    "Could not generate search queries. "
-                    "The detected items may not have Turkish translations yet."
-                )
-                return result
-
-            print(f"Generated {len(search_queries)} queries: {search_queries}")
-
-            # Step 4: Search Trendyol for each query
-            all_product_groups = []
-            for query in search_queries:
-                print(f"Searching: {query}")
-                products = self.trendyol_scraper.search_products(
-                    query,
-                    max_results=MAX_SEARCH_RESULTS,
+                trace.log(
+                    "vlm_analysis",
+                    latency_ms=vlm_latency,
+                    items_detected=len(fashion_data.get("items", [])),
+                    overall_style=fashion_data.get("overall_style", ""),
+                    has_error=bool(fashion_data.get("error")),
                 )
 
-                # Attach similarity scores using fashion-CLIP (text vs image)
-                enhanced = []
-                for product in products:
-                    scored = self.trendyol_scraper.enhance_product_with_similarity(
-                        product, processed_image, fashion_data
+                result['fashion_analysis'] = fashion_data
+
+                if fashion_data.get('error') and not fashion_data.get('items'):
+                    result['error'] = fashion_data['error']
+                    return result
+
+                if not fashion_data.get('items'):
+                    result['error'] = (
+                        "No clothing items were detected. "
+                        "Please upload a clearer photo with good lighting where clothing is clearly visible."
                     )
-                    enhanced.append(scored)
+                    return result
 
-                all_product_groups.append(enhanced)
+                # Step 3: Generate Turkish search queries from VLM output
+                search_queries = self.vlm_service.get_search_queries(fashion_data)
 
-            # Step 5: Merge, deduplicate, and rank
-            merged = merge_product_results(all_product_groups)
-            ranked = sort_products_by_score(merged, reverse=True)
+                if not search_queries:
+                    result['error'] = (
+                        "Could not generate search queries. "
+                        "The detected items may not have Turkish translations yet."
+                    )
+                    return result
 
-            # Step 6: Filter by minimum score and cap results
-            filtered = [
-                p for p in ranked
-                if p.get('similarity_score', 0.0) >= MIN_SIMILARITY_SCORE
-            ]
-            result['products'] = filtered[:max_results]
-            result['success'] = True
+                print(f"Generated {len(search_queries)} queries: {search_queries}")
 
-            print(f"Returning {len(result['products'])} products")
-            return result
+                # Step 4: Search Trendyol for each query
+                all_product_groups = []
+                for query in search_queries:
+                    print(f"Searching: {query}")
+                    search_start = time.monotonic()
+                    products = self.trendyol_scraper.search_products(
+                        query,
+                        max_results=MAX_SEARCH_RESULTS,
+                    )
+                    search_latency = int((time.monotonic() - search_start) * 1000)
+
+                    log_search_call(query, len(products), search_latency)
+
+                    # Attach similarity scores using fashion-CLIP (text vs image)
+                    enhanced = []
+                    clip_start = time.monotonic()
+                    for product in products:
+                        scored = self.trendyol_scraper.enhance_product_with_similarity(
+                            product, processed_image, fashion_data
+                        )
+                        enhanced.append(scored)
+                    clip_latency = int((time.monotonic() - clip_start) * 1000)
+
+                    if enhanced:
+                        top_score = max(p.get("similarity_score", 0) for p in enhanced)
+                        log_clip_scoring(
+                            _image_hash(image_bytes),
+                            len(enhanced),
+                            top_score,
+                            clip_latency,
+                        )
+
+                    all_product_groups.append(enhanced)
+
+                # Step 5: Merge, deduplicate, and rank
+                merged = merge_product_results(all_product_groups)
+                ranked = sort_products_by_score(merged, reverse=True)
+
+                # Step 6: Filter by minimum score and cap results
+                filtered = [
+                    p for p in ranked
+                    if p.get('similarity_score', 0.0) >= MIN_SIMILARITY_SCORE
+                ]
+                result['products'] = filtered[:max_results]
+                result['success'] = True
+
+                trace.log(
+                    "product_search",
+                    latency_ms=sum(
+                        g[0].get("search_latency_ms", 0) if g else 0
+                        for g in [all_product_groups]
+                    ),
+                    queries_generated=len(search_queries),
+                    products_found=len(filtered),
+                )
+
+                print(f"Returning {len(result['products'])} products")
+                return result
 
         except Exception as e:
             print(f"Pipeline error: {e}")

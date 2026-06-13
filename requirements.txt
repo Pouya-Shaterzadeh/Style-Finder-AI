@@ -20,3 +20,6 @@ requests>=2.31.0
 # Utilities
 python-dotenv>=1.0.0
 scikit-learn>=1.3.0
+
+# LangSmith — tracing and evaluation
+langsmith>=0.1.0

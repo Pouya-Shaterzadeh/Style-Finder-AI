@@ -19,6 +19,11 @@ from typing import Dict, List, Optional
 
 from PIL import Image
 
+# Versioned prompts and tracing
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from prompts import FASHION_ANALYSIS, VERSION as PROMPT_VERSION
+from tracing import log_llm_call
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -107,40 +112,10 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# Prompt
+# Prompt (versioned — see prompts.py)
 # ---------------------------------------------------------------------------
 
-FASHION_ANALYSIS_PROMPT = """You are a senior fashion editor and personal stylist. Study this image carefully before writing anything.
-
-Return ONLY a valid JSON object with this exact structure:
-{
-  "gender": "male or female or unisex",
-  "items": [
-    {
-      "type": "one of: t-shirt, shirt, blouse, sweater, hoodie, sweatshirt, cardigan, vest, jacket, blazer, coat, trench coat, parka, leather jacket, pants, jeans, shorts, skirt, dress, jumpsuit, shoes, sneakers, boots, heels, sandals, loafers, bag, belt, watch, scarf, hat, cap, sunglasses",
-      "color": "precise color (e.g. navy blue, cream, burgundy, olive green, charcoal)",
-      "pattern": "one of: solid, striped, plaid, floral, graphic, polka-dot, geometric, animal print, camo",
-      "material": "one of: denim, cotton, wool, leather, silk, knit, polyester, linen, synthetic, unknown",
-      "fit": "one of: slim, regular, oversized, wide-leg, cropped, fitted, relaxed, unknown",
-      "description": "one precise sentence about this item only"
-    }
-  ],
-  "overall_style": "one of: casual, smart-casual, formal, sporty, streetwear, bohemian, minimalist, elegant",
-  "occasion": "one of: everyday, work, evening, sport, beach, formal, party",
-  "stylist_notes": [
-    "COLOR PALETTE — evaluate the specific color combination you see: do the exact colors complement each other? Name the colors and give a precise verdict with one concrete action (e.g. 'The olive cargo pants and cream ribbed top form a grounded, earthy pairing — swap white sneakers for tan leather boots to stay in the warm palette.').",
-    "FIT & PROPORTION — comment on the silhouette the visible items create together: are the proportions balanced? Call out any specific imbalance (oversized vs slim, cropped vs high-waisted) and state clearly whether it works or exactly how to fix it.",
-    "FINISHING TOUCH — identify the single most impactful item missing from this outfit and name it precisely with a color (e.g. 'A thin cognac leather belt would anchor the high-waisted trousers and add definition to the waist that is currently lost under the relaxed blouse.')."
-  ]
-}
-
-Rules:
-- Only include items CLEARLY VISIBLE in the image
-- Be very precise about colors (say "navy blue" not just "blue")
-- For gender: use visible cues (clothing cut, styling) — default to unisex if unclear
-- List items from most to least prominent
-- Maximum 5 items
-- stylist_notes: write exactly 3 notes following the COLOR PALETTE / FIT & PROPORTION / FINISHING TOUCH structure; each note must be 1-2 sentences; ALWAYS reference the specific colors and items you actually observe; NO generic advice"""
+FASHION_ANALYSIS_PROMPT = FASHION_ANALYSIS["prompt"]
 
 
 # ---------------------------------------------------------------------------
@@ -277,6 +252,7 @@ class VLMService:
 
             image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
+            start = time.monotonic()
             response = self.client.chat.completions.create(
                 model=GROQ_MODEL,
                 messages=[
@@ -300,8 +276,22 @@ class VLMService:
                 max_tokens=1024,
             )
 
+            latency_ms = int((time.monotonic() - start) * 1000)
             text = response.choices[0].message.content
             logger.debug(f"Groq raw response: {text[:300]}...")
+
+            # Log to LangSmith
+            log_llm_call(
+                prompt_name="fashion_analysis",
+                prompt_version=PROMPT_VERSION,
+                model=GROQ_MODEL,
+                image_bytes=image_bytes,
+                response_text=text,
+                latency_ms=latency_ms,
+                temperature=0.1,
+                max_tokens=1024,
+            )
+
             return text
 
         except Exception as e:
