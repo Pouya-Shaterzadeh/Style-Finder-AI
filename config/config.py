@@ -50,13 +50,6 @@ MAX_SEARCH_RESULTS = 20
 REQUEST_DELAY      = 0.5
 
 # ---------------------------------------------------------------------------
-# Proxy — Cloudflare Worker to bypass HF Spaces outbound DNS blocks
-# Set TRENDYOL_PROXY_URL to your deployed worker URL, or leave empty to
-# call Trendyol directly (works outside HF Spaces).
-# ---------------------------------------------------------------------------
-TRENDYOL_PROXY_URL = os.getenv("TRENDYOL_PROXY_URL", "")
-
-# ---------------------------------------------------------------------------
 # Image Processing
 # ---------------------------------------------------------------------------
 IMAGE_SIZE     = (512, 512)

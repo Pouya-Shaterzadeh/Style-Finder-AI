@@ -21,7 +21,6 @@ from config.config import (
     TRENDYOL_BASE_URL,
     TRENDYOL_SEARCH_URL,
     TRENDYOL_JSON_API_URL,
-    TRENDYOL_PROXY_URL,
     MAX_SEARCH_RESULTS,
     REQUEST_DELAY,
 )
@@ -134,9 +133,6 @@ class TrendyolScraper:
 
         The endpoint is used by the Trendyol web app itself and returns
         structured JSON with real product data.
-
-        On HF Spaces, public.trendyol.com is DNS-blocked. When a proxy URL
-        is configured, requests are routed through a Cloudflare Worker.
         """
         params = {
             "q": query,
@@ -150,26 +146,6 @@ class TrendyolScraper:
             "searchStrategyType": "DEFAULT_SEARCH_STRATEGY",
         }
 
-        # When proxy is configured, route through Cloudflare Worker
-        if TRENDYOL_PROXY_URL:
-            proxy_url = f"{TRENDYOL_PROXY_URL}?url={TRENDYOL_JSON_API_URL}"
-            for k, v in params.items():
-                proxy_url += f"&{k}={v}"
-            try:
-                resp = self.session.get(proxy_url, timeout=15)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    products = self._parse_json_response(data, query, max_results)
-                    print(f"✅ Proxy API: {len(products)} products for '{query}'")
-                    return products
-                else:
-                    print(f"⚠ Proxy returned HTTP {resp.status_code} for '{query}'")
-                    return []
-            except Exception as e:
-                print(f"⚠ Proxy error for '{query}': {e}")
-                return []
-
-        # Direct call (works outside HF Spaces)
         try:
             resp = self.session.get(
                 TRENDYOL_JSON_API_URL,
