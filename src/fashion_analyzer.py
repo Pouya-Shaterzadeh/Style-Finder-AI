@@ -125,6 +125,7 @@ class FashionAnalyzer:
                     enhanced = []
                     clip_start = time.monotonic()
                     for product in products:
+                        product["search_latency_ms"] = search_latency
                         scored = self.trendyol_scraper.enhance_product_with_similarity(
                             product, processed_image, fashion_data
                         )
@@ -157,8 +158,9 @@ class FashionAnalyzer:
                 trace.log(
                     "product_search",
                     latency_ms=sum(
-                        g[0].get("search_latency_ms", 0) if g else 0
-                        for g in [all_product_groups]
+                        p.get("search_latency_ms", 0)
+                        for group in all_product_groups
+                        for p in group
                     ),
                     queries_generated=len(search_queries),
                     products_found=len(filtered),
