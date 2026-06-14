@@ -147,8 +147,9 @@ def correct_color_hallucinations(items: List[Dict]) -> List[Dict]:
         
         if item_type in COLOR_HALLUCINATION_CORRECTIONS:
             for hallucinated, pattern_ctx, corrected_color in COLOR_HALLUCINATION_CORRECTIONS[item_type]:
-                # Match if color matches hallucination AND pattern context matches (or empty = any)
-                if color == hallucinated and (not pattern_ctx or pattern_ctx in pattern):
+                # Match if hallucinated color appears anywhere in VLM's color string
+                # AND pattern context matches (or empty = any)
+                if hallucinated in color and (not pattern_ctx or pattern_ctx in pattern):
                     logger.warning(f"Color hallucination corrected: {item_type} '{color}' + pattern '{pattern}' → '{corrected_color}'")
                     item["color"] = corrected_color
                     break  # Only apply first matching correction
