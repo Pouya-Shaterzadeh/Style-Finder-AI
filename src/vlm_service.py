@@ -231,7 +231,7 @@ class VLMService:
         # DEBUG: Log raw VLM output before correction
         if fashion_data.get("items"):
             for i, item in enumerate(fashion_data["items"]):
-                logger.debug(f"VLM item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
+                logger.info(f"VLM item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
         
         # Apply color hallucination corrections
         if fashion_data.get("items"):
@@ -240,7 +240,7 @@ class VLMService:
         # DEBUG: Log after correction
         if fashion_data.get("items"):
             for i, item in enumerate(fashion_data["items"]):
-                logger.debug(f"POST-CORRECTION item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
+                logger.info(f"POST-CORRECTION item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
 
         logger.info(
             f"✅ Detected {len(fashion_data.get('items', []))} items: "
