@@ -78,13 +78,9 @@ class TrendyolScraper:
             List of product dicts with: name, brand, price, price_text,
             url, image_url, similarity_score, is_demo
         """
-        print(f"Searching Trendyol (JSON API): {query}")
-
-        products = self._search_json_api(query, max_results)
-
-        if not products:
-            print(f"⚠ JSON API returned no results for '{query}', returning search link")
-            products = self._get_search_link_fallback(query)
+        # JSON API disabled (HTTP 530) — return search link directly for speed
+        print(f"Searching Trendyol (skipping JSON API — returning search link): {query}")
+        products = self._get_search_link_fallback(query)
 
         time.sleep(REQUEST_DELAY)
         return products

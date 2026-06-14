@@ -7,7 +7,21 @@ import gradio as gr
 from PIL import Image
 import sys
 import os
+import signal
+import asyncio
 from typing import Tuple, Optional
+
+# Suppress asyncio "Invalid file descriptor: -1" error on shutdown (Python 3.13+ bug)
+# https://github.com/python/cpython/issues/113861
+if sys.version_info >= (3, 13):
+    original_del = asyncio.BaseEventLoop.__del__
+    def patched_del(self):
+        try:
+            original_del(self)
+        except ValueError as e:
+            if "Invalid file descriptor: -1" not in str(e):
+                raise
+    asyncio.BaseEventLoop.__del__ = patched_del
 
 # Add project root to path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -370,17 +384,8 @@ def create_interface():
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
                                 <div class="step-number">4</div>
                                 <div>
-                                    <h4 class="step-title">Trendyol JSON API Search</h4>
-                                    <p class="step-description">Queries Trendyol's internal product search API for real listings — actual prices, images, and product pages. No scraping, no bot detection.</p>
-                                    <div class="info-box">
-                                        <p class="info-title">Visual Similarity: Fashion-CLIP</p>
-                                        <ul class="info-list">
-                                            <li>patrickjohncyh/fashion-clip — trained on 800K+ fashion pairs</li>
-                                            <li>Text-image cosine similarity ranks product relevance</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                                    <h4 class="step-title">Trendyol Search Links</h4>
+                                    <p class="step-description">Generates direct Trendyol search URLs so you can browse real listings with accurate prices, brands, and availability.</p>
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;">
                                 <div class="step-number">5</div>
                                 <div>
