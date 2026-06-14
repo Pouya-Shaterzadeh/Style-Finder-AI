@@ -38,13 +38,15 @@ CLIP_MODEL_NAME = "patrickjohncyh/fashion-clip"
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 
 # ---------------------------------------------------------------------------
-# Trendyol — internal JSON API (no HTML scraping, no bot detection)
+# Trendyol — via Cloudflare Worker proxy (bypasses DNS + Cloudflare blocks)
+# Worker: https://trendyol-test-proxy.pouya-shaterzadeh.workers.dev
 # ---------------------------------------------------------------------------
-TRENDYOL_BASE_URL    = "https://www.trendyol.com"
-TRENDYOL_SEARCH_URL  = "https://www.trendyol.com/sr"
-TRENDYOL_JSON_API_URL = (
-    "https://public.trendyol.com/discovery-web-searchgw-service/api/"
-    "infinite-scroll/product-search-with-typed-items"
+TRENDYOL_BASE_URL     = "https://www.trendyol.com"
+TRENDYOL_SEARCH_URL   = "https://www.trendyol.com/sr"
+# Worker proxies requests to public.trendyol.com internal API
+TRENDYOL_JSON_API_URL = os.getenv(
+    "TRENDYOL_JSON_API_URL",
+    "https://trendyol-test-proxy.pouya-shaterzadeh.workers.dev/discovery-web-searchgw-service/api/infinite-scroll/product-search-with-typed-items"
 )
 MAX_SEARCH_RESULTS = 20
 REQUEST_DELAY      = 0.5
