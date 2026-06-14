@@ -116,21 +116,21 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 # Map of hallucinated colors → likely actual colors based on common VLM failures
+# Keys match VLM output (English) — corrections applied BEFORE Turkish translation
 COLOR_HALLUCINATION_CORRECTIONS: Dict[str, List[Tuple[str, str, str]]] = {
     # Format: item_type -> [(hallucinated_color, pattern_context, corrected_color), ...]
     "shirt": [
-        ("siyah", "ekose", "mavi krem"),           # blue/cream plaid → NOT black
-        ("siyah", "çizgili", "lacivert beyaz"),    # navy/white stripes → NOT black
-        ("siyah", "plaid", "mavi beyaz"),          # blue/white plaid → NOT black
-        ("siyah", "solid", "lacivert"),            # dark navy solid → navy
-        ("koyu mavi", "ekose", "lacivert krem"),   # dark blue plaid → navy/cream
+        ("black", "plaid", "blue cream"),        # blue/cream plaid → NOT black
+        ("black", "striped", "navy white"),      # navy/white stripes → NOT black
+        ("black", "solid", "navy"),              # dark navy solid → navy
+        ("dark blue", "plaid", "navy cream"),    # dark blue plaid → navy/cream
     ],
     "pants": [
-        ("siyah", "bej", "lacivert"),              # beige pants with dark top → navy
-        ("siyah", "krem", "antrasit"),             # cream combo → charcoal
+        ("black", "beige", "navy"),              # beige pants with dark top → navy
+        ("black", "cream", "charcoal"),          # cream combo → charcoal
     ],
     "t-shirt": [
-        ("siyah", "", "lacivert"),                 # default dark → navy
+        ("black", "", "navy"),                   # default dark → navy
     ],
 }
 
