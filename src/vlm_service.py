@@ -228,10 +228,20 @@ class VLMService:
 
         fashion_data = self._parse_vlm_json(raw)
         
+        # DEBUG: Log raw VLM output before correction
+        if fashion_data.get("items"):
+            for i, item in enumerate(fashion_data["items"]):
+                logger.debug(f"VLM item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
+        
         # Apply color hallucination corrections
         if fashion_data.get("items"):
             fashion_data["items"] = correct_color_hallucinations(fashion_data["items"])
         
+        # DEBUG: Log after correction
+        if fashion_data.get("items"):
+            for i, item in enumerate(fashion_data["items"]):
+                logger.debug(f"POST-CORRECTION item {i}: type={item.get('type')} color={item.get('color')} pattern={item.get('pattern')}")
+
         logger.info(
             f"✅ Detected {len(fashion_data.get('items', []))} items: "
             f"{[i.get('type') for i in fashion_data.get('items', [])]}"
