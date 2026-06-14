@@ -170,7 +170,9 @@ class FashionAnalyzer:
                 return result
 
         except Exception as e:
+            import traceback
             print(f"Pipeline error: {e}")
+            traceback.print_exc()
             result['error'] = str(e)
             return result
 
