@@ -5,7 +5,7 @@ Each prompt is versioned and logged to LangSmith for tracking and comparison.
 Change the VERSION constant when modifying prompts to enable A/B testing.
 """
 
-VERSION = "1.1.0"  # Updated: Added color accuracy guidelines
+VERSION = "1.1.1"  # Updated: Added color accuracy guidelines
 
 # ----------------------------------------------------------------------
 # COLOR ACCURACY GUIDELINES — Critical for VLM to avoid hallucinations
