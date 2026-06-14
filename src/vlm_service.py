@@ -15,7 +15,7 @@ import logging
 import os
 import sys
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Dict, List, Tuple, Optional
 
 from PIL import Image
 
