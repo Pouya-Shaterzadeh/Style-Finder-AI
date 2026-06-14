@@ -70,6 +70,9 @@ COLOR_TRANSLATIONS: Dict[str, str] = {
     "coral": "Mercan", "teal": "Petrol", "turquoise": "Turkuaz",
     "charcoal": "Antrasit", "multicolor": "Çok Renkli", "multi": "Çok Renkli",
     "striped": "Çizgili", "plaid": "Ekose",
+    # Compound colors (for corrected VLM output)
+    "blue cream": "Mavi Krem", "navy white": "Lacivert Beyaz",
+    "blue white": "Mavi Beyaz", "navy cream": "Lacivert Krem",
 }
 
 ITEM_TRANSLATIONS: Dict[str, str] = {
