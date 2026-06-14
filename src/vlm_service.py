@@ -112,6 +112,52 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
+# Color Hallucination Corrections — Post-process VLM output to fix common errors
+# ---------------------------------------------------------------------------
+
+# Map of hallucinated colors → likely actual colors based on common VLM failures
+COLOR_HALLUCINATION_CORRECTIONS: Dict[str, List[Tuple[str, str, str]]] = {
+    # Format: item_type -> [(hallucinated_color, pattern_context, corrected_color), ...]
+    "shirt": [
+        ("siyah", "ekose", "mavi krem"),           # blue/cream plaid → NOT black
+        ("siyah", "çizgili", "lacivert beyaz"),    # navy/white stripes → NOT black
+        ("siyah", "plaid", "mavi beyaz"),          # blue/white plaid → NOT black
+        ("siyah", "solid", "lacivert"),            # dark navy solid → navy
+        ("koyu mavi", "ekose", "lacivert krem"),   # dark blue plaid → navy/cream
+    ],
+    "pants": [
+        ("siyah", "bej", "lacivert"),              # beige pants with dark top → navy
+        ("siyah", "krem", "antrasit"),             # cream combo → charcoal
+    ],
+    "t-shirt": [
+        ("siyah", "", "lacivert"),                 # default dark → navy
+    ],
+}
+
+def correct_color_hallucinations(items: List[Dict]) -> List[Dict]:
+    """
+    Post-process VLM output to fix common color hallucinations.
+    Especially: 'siyah' (black) hallucinated for blue/cream plaid shirts.
+    """
+    corrected = []
+    for item in items:
+        item_type = item.get("type", "").lower().strip()
+        color = item.get("color", "").lower().strip()
+        pattern = item.get("pattern", "").lower().strip()
+        
+        if item_type in COLOR_HALLUCINATION_CORRECTIONS:
+            for hallucinated, pattern_ctx, corrected in COLOR_HALLUCINATION_CORRECTIONS[item_type]:
+                # Match if color matches hallucination AND pattern context matches (or empty = any)
+                if color == hallucinated and (not pattern_ctx or pattern_ctx in pattern):
+                    logger.warning(f"Color hallucination corrected: {item_type} '{color}' + pattern '{pattern}' → '{corrected}'")
+                    item["color"] = corrected
+                    break  # Only apply first matching correction
+        
+        corrected.append(item)
+    return corrected
+
+
+# ---------------------------------------------------------------------------
 # Prompt (versioned — see prompts.py)
 # ---------------------------------------------------------------------------
 
@@ -181,6 +227,11 @@ class VLMService:
             )
 
         fashion_data = self._parse_vlm_json(raw)
+        
+        # Apply color hallucination corrections
+        if fashion_data.get("items"):
+            fashion_data["items"] = correct_color_hallucinations(fashion_data["items"])
+        
         logger.info(
             f"✅ Detected {len(fashion_data.get('items', []))} items: "
             f"{[i.get('type') for i in fashion_data.get('items', [])]}"
