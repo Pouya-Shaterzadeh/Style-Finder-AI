@@ -478,7 +478,7 @@ _CAROUSEL_JS = r"""
 def create_interface():
     """Create and configure the Gradio interface."""
 
-    with gr.Blocks(title="Style Finder AI - Fashion Analysis", head=_CAROUSEL_JS) as demo:
+    with gr.Blocks(title="Style Finder AI - Fashion Analysis") as demo:
 
         # ── Header ────────────────────────────────────────────────────────
         gr.HTML("""
@@ -504,16 +504,16 @@ def create_interface():
                             height=350,
                             show_label=True,
                         )
-                        gr.Examples(
-                            examples=[
-                                [os.path.join(project_root, "sample-photos", "female.jpeg")],
-                                [os.path.join(project_root, "sample-photos", "male.jpeg")],
-                            ],
-                            inputs=image_input,
-                            label="✦ Try sample looks",
-                            examples_per_page=2,
-                            elem_classes=["sf-examples"],
-                        )
+                        with gr.Column(elem_classes=["sf-examples"]):
+                            gr.Examples(
+                                examples=[
+                                    [os.path.join(project_root, "sample-photos", "female.jpeg")],
+                                    [os.path.join(project_root, "sample-photos", "male.jpeg")],
+                                ],
+                                inputs=image_input,
+                                label="✦ Try sample looks",
+                                examples_per_page=2,
+                            )
                         analyze_btn = gr.Button(
                             "Analyze & Find Products",
                             variant="primary",
@@ -643,6 +643,7 @@ if __name__ == "__main__":
         server_port=7860,
         share=False,
         show_error=True,
+        head=_CAROUSEL_JS,
         theme=gr.themes.Base(
             primary_hue="amber",
             neutral_hue="stone",
