@@ -1248,3 +1248,56 @@ input, textarea, select, button {
     .sf-main-row { padding: 0 0.6rem 1.25rem !important; }
     .sf-card-img { height: 170px !important; }
 }
+
+/* === Critical mobile overflow fix — post-analysis horizontal scroll === */
+@media (max-width: 768px) {
+    html, body,
+    .gradio-container,
+    .gradio-container > .main,
+    .gradio-container .contain,
+    .gradio-container .gap {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+    .sf-main-row,
+    .sf-inner-row,
+    .sf-results-grid,
+    .sf-analysis-panel,
+    .sf-products-grid {
+        max-width: 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    .sf-ob-track,
+    .sf-sn-track {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .gr-row, .gr-column,
+    .sf-main-row .gr-row,
+    .sf-main-row .gr-column,
+    .sf-inner-row .gr-column {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .sf-card, .sf-ob-card, .sf-sn-slide {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        box-sizing: border-box !important;
+    }
+    .sf-card-name, .sf-ob-desc, .sf-sn-body {
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        hyphens: auto !important;
+    }
+}
