@@ -339,7 +339,7 @@ class VLMService:
                     }
                 ],
                 temperature=0.1,
-                max_tokens=1024,
+                max_tokens=4096,
             )
 
             latency_ms = int((time.monotonic() - start) * 1000)
@@ -355,7 +355,7 @@ class VLMService:
                 response_text=text,
                 latency_ms=latency_ms,
                 temperature=0.1,
-                max_tokens=1024,
+                max_tokens=4096,
             )
 
             return text
@@ -371,26 +371,35 @@ class VLMService:
     def _parse_vlm_json(self, raw_text: str) -> Dict:
         """
         Parse JSON from API response.
-        Handles markdown fences and extracts the first JSON object found.
+        Handles markdown fences, thinking tags, and truncated JSON.
         """
         if not raw_text:
             return self._empty_result("Empty response from API")
 
         text = raw_text.strip()
 
-        # Strip Qwen thinking tags if present
-        text = re.sub(r"<think>[\s\S]*?</think>\s*", "", text).strip()
+        # Strip thinking tags if present (Qwen-style)
+        text = re.sub(r"<thinking>[\s\S]*?</thinking>\s*", "", text).strip()
 
-        # Strip markdown fences if present (fallback)
+        # Strip markdown fences if present
         fence = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", text)
         if fence:
             text = fence.group(1).strip()
+        else:
+            # No closing fence — strip any leading ``` or ```json marker
+            text = re.sub(r"^```(?:json)?\s*", "", text).strip()
+            text = re.sub(r"```\s*$", "", text).strip()
 
-        # If still not a JSON object, try to extract one
+        # Extract the JSON object from the first { (keeps content even if trailing text/fence)
         if not text.startswith("{"):
             brace = re.search(r"\{[\s\S]+\}", text)
             if brace:
                 text = brace.group(0)
+            else:
+                # Truncated: no closing brace — take from first { to end
+                first = text.find("{")
+                if first != -1:
+                    text = text[first:]
 
         try:
             data = json.loads(text)
@@ -426,15 +435,31 @@ class VLMService:
         return result
 
     def _recover_partial_json(self, text: str) -> Optional[Dict]:
-        """Best-effort recovery for slightly malformed JSON."""
-        try:
-            fixed = re.sub(r",\s*}", "}", text)
-            fixed = re.sub(r",\s*]", "]", fixed)
-            if not fixed.rstrip().endswith("}"):
-                fixed = fixed.rstrip() + "}"
-            return json.loads(fixed)
-        except Exception:
+        """Best-effort recovery for truncated or malformed JSON."""
+        # Clean leading non-JSON (e.g. ```json) and trailing fences
+        text = text.strip()
+        start = text.find("{")
+        if start == -1:
             return None
+        text = text[start:]
+
+        # Trim trailing non-JSON (closing ``` etc.)
+        end = text.rfind("}")
+        if end != -1:
+            text = text[: end + 1]
+
+        candidates = [text]
+        # Truncated: remove trailing comma and close dangling structures
+        fixed = re.sub(r",\s*$", "", text)
+        if fixed != text:
+            candidates.append(fixed + "}")
+        # Try balancing open braces/brackets
+        for c in candidates:
+            try:
+                return json.loads(c)
+            except Exception:
+                pass
+        return None
 
     @staticmethod
     def _empty_result(error_msg: str = "") -> Dict:
