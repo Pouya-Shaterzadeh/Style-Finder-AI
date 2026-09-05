@@ -504,6 +504,16 @@ def create_interface():
                             height=350,
                             show_label=True,
                         )
+                        gr.Examples(
+                            examples=[
+                                [os.path.join(project_root, "sample-photos", "female.jpeg")],
+                                [os.path.join(project_root, "sample-photos", "male.jpeg")],
+                            ],
+                            inputs=image_input,
+                            label="✦ Try sample looks",
+                            examples_per_page=2,
+                            elem_classes=["sf-examples"],
+                        )
                         analyze_btn = gr.Button(
                             "Analyze & Find Products",
                             variant="primary",

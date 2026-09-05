@@ -201,6 +201,35 @@ button[aria-dropeffect="copy"]:hover {
     background: rgba(201, 169, 110, 0.1) !important;
 }
 
+/* Sample photos — editorial thumbnails */
+.sf-examples {
+    margin: 0.85rem 0 0.2rem !important;
+}
+.sf-examples .gr-examples {
+    gap: 0.6rem !important;
+}
+.sf-examples label span {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.12em !important;
+    color: var(--c-text-dim) !important;
+}
+.sf-examples .thumbnail-item,
+.sf-examples [data-testid="example"] {
+    border-radius: var(--r-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--c-border) !important;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease !important;
+}
+.sf-examples .thumbnail-item:hover,
+.sf-examples [data-testid="example"]:hover {
+    border-color: var(--c-accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,169,110,0.15) !important;
+}
+.sf-examples img {
+    object-fit: cover !important;
+}
+
 label span,
 .gradio-container label {
     font-family: var(--font-body) !important;
