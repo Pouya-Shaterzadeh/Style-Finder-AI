@@ -84,48 +84,152 @@ def _color_dot(color_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# HTML rendering — analysis panel
+# Item icon map — editorial emoji for each garment type
+# ---------------------------------------------------------------------------
+
+_ITEM_ICONS: dict = {
+    "t-shirt": "◈", "tshirt": "◈", "shirt": "⬢", "blouse": "⬢", "top": "⬢",
+    "sweater": "⬣", "pullover": "⬣", "knitwear": "⬣", "hoodie": "⬣", "sweatshirt": "⬣",
+    "cardigan": "⬣", "vest": "▪", "jacket": "◆", "blazer": "◆", "coat": "◆",
+    "trench coat": "◆", "parka": "◆", "leather jacket": "◆",
+    "pants": "▬", "trousers": "▬", "jeans": "▬", "shorts": "▬", "skirt": "▽", "mini skirt": "▽",
+    "dress": "△", "maxi dress": "△", "mini dress": "△", "jumpsuit": "△", "overalls": "△",
+    "shoes": "⬔", "sneakers": "⬔", "boots": "⬔", "heels": "⬔", "sandals": "⬔", "loafers": "⬔",
+    "bag": "⬙", "handbag": "⬙", "backpack": "⬙", "belt": "━", "watch": "◍", "scarf": "〜",
+    "hat": "◒", "cap": "◒", "sunglasses": "◐",
+}
+
+def _item_icon(item_type: str) -> str:
+    key = item_type.lower().strip()
+    if key in _ITEM_ICONS:
+        return _ITEM_ICONS[key]
+    for k, v in _ITEM_ICONS.items():
+        if k in key or key in k:
+            return v
+    return "✦"
+
+
+# ---------------------------------------------------------------------------
+# HTML rendering — analysis panel  (luxury carousel + slide deck)
 # ---------------------------------------------------------------------------
 
 def _render_item_chips(fashion_data: dict) -> str:
-    """Render item chip HTML for the Outfit Breakdown panel."""
-    html_parts = []
-    for item in fashion_data.get('items', []):
+    """Render Outfit Breakdown as a horizontal snap-scroll carousel of luxury cards."""
+    items = fashion_data.get('items', [])
+    if not items:
+        return '<div class="sf-ob-empty">No items detected</div>'
+
+    cards = []
+    for idx, item in enumerate(items):
         item_type  = item.get("type", "Unknown").title()
         raw_color  = item.get("color", "")
         item_color = raw_color.title() if raw_color not in ("unknown", "", None) else ""
         item_display = f"{item_color} {item_type}".strip() if item_color else item_type
 
-        extra_parts = []
         pattern     = item.get("pattern", "")
         material    = item.get("material", "")
         fit         = item.get("fit", "")
         description = item.get("description", "")
-        if pattern  and pattern  not in ("solid",   "unknown", ""):
-            extra_parts.append(pattern.title())
+
+        tags = []
+        if pattern  and pattern  not in ("solid", "unknown", ""):
+            tags.append(pattern.title())
         if material and material not in ("unknown", ""):
-            extra_parts.append(material.title())
+            tags.append(material.title())
         if fit      and fit      not in ("unknown", ""):
-            extra_parts.append(fit.title())
+            tags.append(fit.title())
 
         dot_html  = _color_dot(raw_color) if raw_color else ""
-        tags_html = "".join(f'<span class="sf-chip-tag">{p}</span>' for p in extra_parts)
+        icon      = _item_icon(item.get("type", ""))
+        num       = f"{idx+1:02d}"
+        tags_html = "".join(f'<span class="sf-ob-tag">{t}</span>' for t in tags)
 
-        html_parts.append(f"""
-        <div class="sf-item-chip">
-            <div class="sf-chip-header">
-                {dot_html}
-                <span class="sf-item-chip-name">{item_display}</span>
+        cards.append(f"""
+        <div class="sf-ob-card">
+            <div class="sf-ob-card-top">
+                <span class="sf-ob-num">{num}</span>
+                <span class="sf-ob-icon">{icon}</span>
             </div>
-            {f'<div class="sf-chip-tags">{tags_html}</div>' if tags_html else ''}
-            {f'<div class="sf-item-chip-desc">{description}</div>' if description else ''}
+            <div class="sf-ob-card-header">
+                {dot_html}
+                <span class="sf-ob-name">{item_display}</span>
+            </div>
+            {f'<div class="sf-ob-tags">{tags_html}</div>' if tags_html else '<div class="sf-ob-tags"><span class="sf-ob-tag sf-ob-tag-muted">Essential</span></div>'}
+            {f'<p class="sf-ob-desc">{description}</p>' if description else ''}
         </div>
         """)
-    return "".join(html_parts)
+
+    dots = "".join(
+        f'<span class="sf-ob-dot{" active" if i==0 else ""}" data-idx="{i}"></span>'
+        for i in range(len(cards))
+    )
+
+    return f"""
+    <div class="sf-ob-carousel">
+        <div class="sf-ob-track" id="sf-ob-track">
+            {"".join(cards)}
+        </div>
+        <div class="sf-ob-controls">
+            <button class="sf-ob-nav prev" aria-label="Previous" onclick="document.getElementById('sf-ob-track').scrollBy({{left:-288,behavior:'smooth'}})">‹</button>
+            <div class="sf-ob-dots">{dots}</div>
+            <button class="sf-ob-nav next" aria-label="Next" onclick="document.getElementById('sf-ob-track').scrollBy({{left:288,behavior:'smooth'}})">›</button>
+        </div>
+    </div>
+    """
+
+
+_STYLIST_LABELS = ["COLOR PALETTE", "FIT & PROPORTION", "FINISHING TOUCH"]
+_STYLIST_ICONS  = ["⬢", "⬣", "✦"]
+
+def _render_stylist_slides(tips: list) -> str:
+    """Render Stylist Notes as an editorial slide deck with dot navigation."""
+    clean = [t.strip() for t in tips if t and t.strip()][:3]
+    if not clean:
+        return ""
+
+    # Extract label/body if tip contains " — " separator, else use defaults
+    slides = []
+    for i, tip in enumerate(clean):
+        label = _STYLIST_LABELS[i] if i < len(_STYLIST_LABELS) else f"NOTE {i+1:02d}"
+        icon  = _STYLIST_ICONS[i] if i < len(_STYLIST_ICONS) else "✦"
+        # Try to split on " — " or " - " to separate label from body
+        body = tip
+        # If tip starts with label-like prefix, keep whole tip as body
+        num = f"{i+1:02d}"
+        slides.append(f"""
+        <div class="sf-sn-slide">
+            <div class="sf-sn-slide-head">
+                <span class="sf-sn-num">{num}</span>
+                <span class="sf-sn-icon">{icon}</span>
+                <span class="sf-sn-label">{label}</span>
+            </div>
+            <div class="sf-sn-body">{body}</div>
+            <div class="sf-sn-quote">”</div>
+        </div>
+        """)
+
+    dots = "".join(
+        f'<span class="sf-sn-dot{" active" if i==0 else ""}" data-idx="{i}" onclick="document.getElementById(\'sf-sn-track\').scrollTo({{left:{i}*336,behavior:\'smooth\'}})"></span>'
+        for i in range(len(slides))
+    )
+    total = len(slides)
+
+    return f"""
+    <div class="sf-sn-deck">
+        <div class="sf-sn-track" id="sf-sn-track">
+            {"".join(slides)}
+        </div>
+        <div class="sf-sn-controls">
+            <button class="sf-sn-nav prev" aria-label="Previous" onclick="document.getElementById('sf-sn-track').scrollBy({{left:-336,behavior:'smooth'}})">‹</button>
+            <div class="sf-sn-dots">{dots}</div>
+            <button class="sf-sn-nav next" aria-label="Next" onclick="document.getElementById('sf-sn-track').scrollBy({{left:336,behavior:'smooth'}})">›</button>
+        </div>
+    </div>
+    """
 
 
 def format_analysis_html(result: dict) -> str:
-    """Render the Outfit Breakdown + Stylist Notes panel (left column)."""
+    """Render the Outfit Breakdown + Stylist Notes panel (left column) — luxury editorial."""
     if not result.get('success'):
         return ""
 
@@ -137,15 +241,28 @@ def format_analysis_html(result: dict) -> str:
         return ""
 
     html_parts = ['<div class="sf-analysis-panel">']
-    html_parts.append('<h3 class="sf-analysis-title">Outfit Breakdown</h3>')
+
+    # ── Outfit Breakdown carousel ──────────────────────────────
+    html_parts.append("""
+    <div class="sf-section-head">
+        <h3 class="sf-analysis-title">Outfit Breakdown</h3>
+        <span class="sf-count-pill">""" + f"{len(items)} piece{'s' if len(items)!=1 else ''}" + """</span>
+    </div>
+    <p class="sf-section-sub">Tap to explore each piece — swipe or use arrows</p>
+    """)
     html_parts.append(_render_item_chips(fashion_data))
 
+    # ── Stylist Notes slide deck ───────────────────────────────
     if style_tips:
-        html_parts.append('<div class="sf-tips-section">')
-        html_parts.append('<h4 class="sf-tips-title">Stylist Notes</h4>')
-        for tip in style_tips:
-            if tip and tip.strip():
-                html_parts.append(f'<div class="sf-tip-item">{tip}</div>')
+        html_parts.append("""
+        <div class="sf-sn-section">
+            <div class="sf-section-head">
+                <h4 class="sf-tips-title">Stylist Notes</h4>
+                <span class="sf-sn-badge">Editorial curation</span>
+            </div>
+            <p class="sf-section-sub">Curated by AI — swipe through the edit</p>
+        """)
+        html_parts.append(_render_stylist_slides(style_tips))
         html_parts.append('</div>')
 
     html_parts.append('</div>')
