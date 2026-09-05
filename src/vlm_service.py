@@ -113,6 +113,17 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
     "male": "Erkek", "female": "Kadın", "unisex": "",
 }
 
+MATERIAL_TRANSLATIONS: Dict[str, str] = {
+    "knit": "Triko", "knitted": "Triko", "ribbed knit": "Fitilli Triko",
+    "wool": "Yün", "cotton": "Pamuklu", "denim": "Kot", "denim cotton": "Kot",
+    "leather": "Deri", "suede": "Süet", "silk": "İpek", "satin": "Saten",
+    "polyester": "Polyester", "linen": "Keten", "linen blend": "Keten",
+    "synthetic": "", "unknown": "", "": "",
+    # compound / texture hints
+    "ribbed": "Fitilli", "rib knit": "Fitilli Triko", "cable knit": "Saç Örgü Triko",
+    "fleece": "Polar", "cashmere": "Kaşmir", "velvet": "Kadife",
+}
+
 FIT_TRANSLATIONS: Dict[str, str] = {
     "slim": "Slim", "skinny": "Skinny", "fitted": "Dar", "tailored": "Dar",
     "regular": "", "relaxed": "Bol", "loose": "Bol", "oversized": "Oversize",
@@ -268,7 +279,8 @@ class VLMService:
     def get_search_queries(self, fashion_data: Dict) -> List[str]:
         """
         Convert structured fashion data to Turkish Trendyol search queries.
-        e.g. female + navy blue + slim + jeans → "Kadın Lacivert Slim Jean"
+        Includes texture/material so knit vs satin vs cotton don't collapse.
+        e.g. male burgundy knit polo → "Erkek Bordo Fitilli Triko Polo Yaka Gömlek"
         """
         queries = []
         gender_tr = GENDER_TRANSLATIONS.get(
@@ -276,17 +288,26 @@ class VLMService:
         )
 
         for item in fashion_data.get("items", [])[:5]:
-            item_type = item.get("type", "").lower().strip()
-            color     = item.get("color", "").lower().strip()
-            pattern   = item.get("pattern", "solid").lower().strip()
-            fit       = item.get("fit", "").lower().strip()
+            item_type   = item.get("type", "").lower().strip()
+            color       = item.get("color", "").lower().strip()
+            pattern     = item.get("pattern", "solid").lower().strip()
+            fit         = item.get("fit", "").lower().strip()
+            material    = item.get("material", "").lower().strip()
+            description = item.get("description", "").lower()
 
-            item_tr = ITEM_TRANSLATIONS.get(item_type, "")
-            if not item_tr:
-                for key, val in ITEM_TRANSLATIONS.items():
-                    if key in item_type or item_type in key:
-                        item_tr = val
-                        break
+            # ---- Item translation with polo detection ----
+            # VLM often returns "shirt" for polo knits; use description to refine.
+            is_polo = "polo" in description or "polo" in item_type
+            base_item = item_type
+            if is_polo and item_type in ("shirt", "t-shirt", "tshirt"):
+                item_tr = "Polo Yaka Gömlek" if item_type == "shirt" else "Polo Yaka Tişört"
+            else:
+                item_tr = ITEM_TRANSLATIONS.get(item_type, "")
+                if not item_tr:
+                    for key, val in ITEM_TRANSLATIONS.items():
+                        if key in item_type or item_type in key:
+                            item_tr = val
+                            break
             if not item_tr:
                 continue
 
@@ -297,7 +318,6 @@ class VLMService:
                     if key in color:
                         color_tr = val
                         break
-            # Fallback: keep the raw color if no translation found (avoid generic query)
             if not color_tr:
                 color_tr = color.capitalize()
 
@@ -308,7 +328,23 @@ class VLMService:
                         pattern_tr = val
                         break
 
-            # Fit / model — specific garment silhouettes matter (e.g. pants)
+            # Material / texture — critical for knit vs satin distinction
+            material_tr = MATERIAL_TRANSLATIONS.get(material, "")
+            if not material_tr:
+                for key, val in MATERIAL_TRANSLATIONS.items():
+                    if key and key in material:
+                        material_tr = val
+                        break
+            # Enhance with description texture hints when material is generic
+            if "ribbed" in description or "rib knit" in description:
+                if material_tr and "Fitilli" not in material_tr:
+                    material_tr = f"Fitilli {material_tr}".strip()
+                elif not material_tr:
+                    material_tr = "Fitilli Triko"
+            if "satin" in description:
+                material_tr = "Saten"
+
+            # Fit / model
             fit_tr = FIT_TRANSLATIONS.get(fit, "")
             if not fit_tr:
                 for key, val in FIT_TRANSLATIONS.items():
@@ -316,7 +352,7 @@ class VLMService:
                         fit_tr = val
                         break
 
-            parts = [p for p in [gender_tr, color_tr, pattern_tr, fit_tr, item_tr] if p]
+            parts = [p for p in [gender_tr, color_tr, material_tr, pattern_tr, fit_tr, item_tr] if p]
             query = " ".join(parts)
             if query and query not in queries:
                 queries.append(query)

@@ -5,7 +5,7 @@ Each prompt is versioned and logged to LangSmith for tracking and comparison.
 Change the VERSION constant when modifying prompts to enable A/B testing.
 """
 
-VERSION = "1.1.1"  # Updated: Added color accuracy guidelines
+VERSION = "1.2.0"  # Updated: Added texture/material guidelines for knit vs satin distinction
 
 # ----------------------------------------------------------------------
 # COLOR ACCURACY GUIDELINES — Critical for VLM to avoid hallucinations
@@ -35,6 +35,22 @@ FEW-SHOT COLOR EXAMPLES (Study these):
 ✗ WRONG: Blue/cream plaid → "Erkek Siyah Ekose Gömlek"  (color hallucination!)
 
 RULE: If you cannot confidently distinguish black from navy from dark gray → describe what you ACTUALLY see: "koyu mavi tonlarında ekose" or "koyu renk ekose desenli" — never default to "siyah".
+"""
+
+TEXTURE_GUIDELINES = """
+CRITICAL TEXTURE/MATERIAL RULES (MUST FOLLOW):
+- Look CLOSELY at fabric surface — knit vs woven vs satin are distinct:
+  * KNIT (knit, ribbed knit, jersey, örme/triko): visible loops, stretchy, textured, often polo shirts/sweaters — write "knit"
+  * SATIN/SILK (saten/ipek): glossy, shiny, smooth sheen, drapes with light reflection — write "silk" or "satin"
+  * COTTON (pamuk): matte, soft, no sheen, casual shirts/t-shirts — write "cotton"
+  * DENIM (kot): diagonal twill texture, jeans — write "denim"
+  * WOOL (yün): fuzzy, warm, heavier — write "wool"
+  * LEATHER (deri): smooth or pebbled hide — write "leather"
+  * LINEN (keten): rough, breathable, wrinkled — write "linen"
+  * POLO SHIRTS: if collar is polo-style with buttons at neck, material is almost always KNIT — write "knit" not "cotton"
+  * RIBBED texture → still "knit" for material, describe as "ribbed knit" in description
+- NEVER default to "cotton" for everything — examine texture!
+- For description: include texture cue e.g. "ribbed knit polo", "satin shirt", "denim jeans"
 """
 
 FASHION_ANALYSIS = {
@@ -68,6 +84,7 @@ FASHION_ANALYSIS = {
         "  ]\n"
         "}\n\n"
         f"{COLOR_GUIDELINES}\n\n"
+        f"{TEXTURE_GUIDELINES}\n\n"
         "Rules:\n"
         "- Only include items CLEARLY VISIBLE in the image\n"
         '- Be very precise about colors (say "navy blue" not just "blue")\n'
