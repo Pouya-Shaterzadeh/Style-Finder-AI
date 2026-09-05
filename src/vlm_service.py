@@ -322,6 +322,14 @@ class VLMService:
                 model=GROQ_MODEL,
                 messages=[
                     {
+                        "role": "system",
+                        "content": (
+                            "You are a fashion analysis API. "
+                            "Do NOT show your thinking process. "
+                            "Output ONLY a valid JSON object — no markdown, no explanation, no <think> tags."
+                        ),
+                    },
+                    {
                         "role": "user",
                         "content": [
                             {
