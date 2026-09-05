@@ -69,6 +69,9 @@ COLOR_TRANSLATIONS: Dict[str, str] = {
     "coral": "Mercan", "teal": "Petrol", "turquoise": "Turkuaz",
     "charcoal": "Antrasit", "multicolor": "Çok Renkli", "multi": "Çok Renkli",
     "striped": "Çizgili", "plaid": "Ekose",
+    # Trendyol-specific neutrals
+    "taupe": "Taş", "greige": "Taş", "stone": "Taş", "mushroom": "Taş",
+    "ecru": "Ekru", "oatmeal": "Bej", "sand": "Bej",
     # Compound colors (for corrected VLM output)
     "blue cream": "Mavi Krem", "navy white": "Lacivert Beyaz",
     "blue white": "Mavi Beyaz", "navy cream": "Lacivert Krem",
@@ -388,6 +391,23 @@ class VLMService:
             # For upper-body knit tops, neckline matters more than tightness
             if yaka_tr and fit_tr == "Dar" and item_type in ("sweater", "shirt", "blouse", "t-shirt", "tshirt", "top", "cardigan", "knitwear", "pullover"):
                 fit_tr = ""
+
+            # ----- Footwear simplification — avoid Taupe/Deri/Çizgili hallucinations
+            _FOOTWEAR = {"shoes", "sneakers", "boots", "heels", "sandals", "loafers", "oxfords"}
+            if item_type in _FOOTWEAR:
+                # striped/plaid solid hallucinations are common for laces/soles — keep only distinctive patterns
+                if pattern in ("striped", "plaid", "checked", "solid"):
+                    pattern_tr = ""
+                # Sneakers are mostly synthetic/canvas — Deri is often hallucinated; drop to avoid over-filtering
+                if item_type == "sneakers":
+                    material_tr = ""
+                # Taupe sole vs white upper — prioritize upper; if shoe is white-dominant, taupe is likely sole hallucination
+                if color == "taupe" and ("white" in description or "cream" in description or "bej" in description.lower()):
+                    color_tr = "Beyaz"
+
+            # Avoid duplicate material in item name (e.g. Deri + Deri Ceket)
+            if material_tr and material_tr in item_tr:
+                material_tr = ""
 
             parts = [p for p in [gender_tr, color_tr, material_tr, yaka_tr, kol_tr, pattern_tr, fit_tr, item_tr] if p]
             query = " ".join(parts)

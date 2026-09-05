@@ -5,7 +5,7 @@ Each prompt is versioned and logged to LangSmith for tracking and comparison.
 Change the VERSION constant when modifying prompts to enable A/B testing.
 """
 
-VERSION = "1.2.0"  # Updated: Added texture/material guidelines for knit vs satin distinction
+VERSION = "1.2.1"  # Updated: Added footwear color accuracy and pattern fix
 
 # ----------------------------------------------------------------------
 # COLOR ACCURACY GUIDELINES — Critical for VLM to avoid hallucinations
@@ -51,6 +51,10 @@ CRITICAL TEXTURE/MATERIAL RULES (MUST FOLLOW):
   * RIBBED texture → still "knit" for material, describe as "ribbed knit" in description
 - NEVER default to "cotton" for everything — examine texture!
 - For description: include texture cue e.g. "ribbed knit polo", "satin shirt", "denim jeans"
+- FOOTWEAR SPECIAL RULES:
+  * Sneakers: dominant UPPER color only — ignore tan/gum SOLE color; sole is not the shoe color (e.g. white sneakers with gum sole → still "white", not "taupe")
+  * Sneakers pattern: "solid" unless stripes/camo/animal are CLEARLY visible on the UPPER (laces alone ≠ striped). 3 stripes on side = "striped", else "solid"
+  * Sneakers material: "synthetic" or "cotton" (canvas/mesh) for casual sport shoes; "leather" ONLY if upper is clearly smooth leather — chunky dad sneakers are NOT leather
 """
 
 FASHION_ANALYSIS = {
