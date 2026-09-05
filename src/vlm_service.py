@@ -377,6 +377,9 @@ class VLMService:
 
         text = raw_text.strip()
 
+        # Strip Qwen thinking tags if present
+        text = re.sub(r"<think>[\s\S]*?</think>\s*", "", text).strip()
+
         # Strip markdown fences if present (fallback)
         fence = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", text)
         if fence:
