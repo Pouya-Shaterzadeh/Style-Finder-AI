@@ -1175,12 +1175,12 @@ input, textarea, select, button {
     .sf-sn-slide { min-height: 150px !important; padding: 1rem 1rem 0.9rem !important; }
     .sf-sn-body { font-size: 0.82rem !important; line-height: 1.6 !important; }
 
-    /* Products */
+    /* Products — single column on mobile to prevent horizontal overflow */
     .sf-products-header { margin-bottom: 1rem !important; padding-bottom: 0.8rem !important; }
     .sf-products-title { font-size: 1.3rem !important; }
     .sf-products-sub { font-size: 0.72rem !important; }
-    .sf-products-grid { gap: 0.85rem !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    .sf-card { border-radius: var(--r-md) !important; }
+    .sf-products-grid { gap: 0.85rem !important; grid-template-columns: 1fr !important; }
+    .sf-card { border-radius: var(--r-md) !important; max-width: 100% !important; overflow: hidden !important; }
     .sf-card-img { height: 152px !important; }
     .sf-card-body { padding: 0.7rem 0.75rem 0.8rem !important; }
     .sf-card-name { font-size: 0.82rem !important; line-height: 1.35 !important; }
@@ -1192,10 +1192,20 @@ input, textarea, select, button {
     .sf-loading { padding: 3rem 1.25rem !important; }
     .sf-ready { padding: 2.5rem 1.25rem !important; }
     .sf-ready-title { font-size: 1.25rem !important; }
+    /* Fix results grid flex overflow on mobile — right products column was 380px basis */
+    .sf-results-grid { flex-direction: column !important; gap: 1.25rem !important; max-width: 100% !important; overflow-x: hidden !important; }
+    .sf-results-grid > div,
+    .sf-results-grid > div:last-child {
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .sf-analysis-panel { max-width: 100% !important; width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
 }
 
 @media (max-width: 640px) {
-    .sf-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.7rem !important; }
+    .sf-products-grid { grid-template-columns: 1fr !important; gap: 0.7rem !important; }
     .sf-card-img { height: 138px !important; }
 }
 
@@ -1210,7 +1220,7 @@ input, textarea, select, button {
     .sf-section-sub { font-size: 0.66rem !important; }
     .sf-ob-card { flex: 0 0 100% !important; }
     .sf-ob-controls .sf-ob-nav, .sf-sn-controls .sf-sn-nav { width: 36px !important; height: 36px !important; }
-    .sf-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.6rem !important; }
+    .sf-products-grid { grid-template-columns: 1fr !important; gap: 0.6rem !important; }
     .sf-card-img { height: 132px !important; }
     .sf-card-body { padding: 0.6rem 0.6rem 0.7rem !important; }
     .sf-card-name { font-size: 0.78rem !important; }
