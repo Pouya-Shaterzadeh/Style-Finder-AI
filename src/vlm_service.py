@@ -113,6 +113,18 @@ GENDER_TRANSLATIONS: Dict[str, str] = {
     "male": "Erkek", "female": "Kadın", "unisex": "",
 }
 
+FIT_TRANSLATIONS: Dict[str, str] = {
+    "slim": "Slim", "skinny": "Skinny", "fitted": "Dar", "tailored": "Dar",
+    "regular": "", "relaxed": "Bol", "loose": "Bol", "oversized": "Oversize",
+    "baggy": "Bol", "wide-leg": "Geniş Paça", "wide": "Geniş Paça",
+    "wide leg": "Geniş Paça", "flare": "Klapa", "flared": "Klapa",
+    "straight": "Düz", "straight-leg": "Düz Paça", "straight leg": "Düz Paça",
+    "cropped": "Kısa", "cropped": "Kısa", "high-waisted": "Yüksek Bel",
+    "high waist": "Yüksek Bel", "mid-rise": "Orta Bel", "low-rise": "Düşük Bel",
+    "bootcut": "Bootcut", "cargo": "Kargo", "sweatpants": "Eşofman",
+    "jogger": "Jogger", "unknown": "", "": "",
+}
+
 # ---------------------------------------------------------------------------
 # Color Hallucination Corrections — Post-process VLM output to fix common errors
 # ---------------------------------------------------------------------------
@@ -267,6 +279,7 @@ class VLMService:
             item_type = item.get("type", "").lower().strip()
             color     = item.get("color", "").lower().strip()
             pattern   = item.get("pattern", "solid").lower().strip()
+            fit       = item.get("fit", "").lower().strip()
 
             item_tr = ITEM_TRANSLATIONS.get(item_type, "")
             if not item_tr:
@@ -277,16 +290,33 @@ class VLMService:
             if not item_tr:
                 continue
 
+            # Color — exact match first, then partial substring match
             color_tr = COLOR_TRANSLATIONS.get(color, "")
             if not color_tr:
                 for key, val in COLOR_TRANSLATIONS.items():
                     if key in color:
                         color_tr = val
                         break
+            # Fallback: keep the raw color if no translation found (avoid generic query)
+            if not color_tr:
+                color_tr = color.capitalize()
 
             pattern_tr = PATTERN_TRANSLATIONS.get(pattern, "")
+            if not pattern_tr:
+                for key, val in PATTERN_TRANSLATIONS.items():
+                    if key in pattern:
+                        pattern_tr = val
+                        break
 
-            parts = [p for p in [gender_tr, color_tr, pattern_tr, item_tr] if p]
+            # Fit / model — specific garment silhouettes matter (e.g. pants)
+            fit_tr = FIT_TRANSLATIONS.get(fit, "")
+            if not fit_tr:
+                for key, val in FIT_TRANSLATIONS.items():
+                    if key in fit:
+                        fit_tr = val
+                        break
+
+            parts = [p for p in [gender_tr, color_tr, pattern_tr, fit_tr, item_tr] if p]
             query = " ".join(parts)
             if query and query not in queries:
                 queries.append(query)
