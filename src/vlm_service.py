@@ -136,6 +136,24 @@ FIT_TRANSLATIONS: Dict[str, str] = {
     "jogger": "Jogger", "unknown": "", "": "",
 }
 
+# Neckline / collar and sleeve — extracted from VLM description for precision
+YAKA_KEYWORDS: List[Tuple[str, str]] = [
+    ("square neckline", "Kare Yaka"), ("square neck", "Kare Yaka"), ("square-neck", "Kare Yaka"),
+    ("polo", "Polo Yaka"), ("turtleneck", "Balıkçı Yaka"), ("high neck", "Balıkçı Yaka"),
+    ("mock neck", "Balıkçı Yaka"), ("boat neck", "Kayık Yaka"), ("off-shoulder", "Omzu Açık"),
+    ("off shoulder", "Omzu Açık"), ("off the shoulder", "Omzu Açık"),
+    ("v-neck", "V Yaka"), ("v neck", "V Yaka"), ("v-neckline", "V Yaka"),
+    ("crew neck", "Bisiklet Yaka"), ("round neck", "Bisiklet Yaka"), ("scoop neck", "Bisiklet Yaka"),
+    ("halter", "Halter Yaka"), ("one-shoulder", "Tek Omuz"), ("collared", "Gömlek Yaka"),
+]
+
+SLEEVE_KEYWORDS: List[Tuple[str, str]] = [
+    ("long-sleeve", "Uzun Kollu"), ("long sleeve", "Uzun Kollu"), ("long sleeves", "Uzun Kollu"),
+    ("short-sleeve", "Kısa Kollu"), ("short sleeve", "Kısa Kollu"), ("short sleeves", "Kısa Kollu"),
+    ("sleeveless", "Kolsuz"), ("tank", "Kolsuz"), ("three-quarter", "Yarım Kollu"),
+    ("3/4", "Yarım Kollu"), ("cap sleeve", "Kısa Kollu"), ("elbow", "Dirsek Kollu"),
+]
+
 # ---------------------------------------------------------------------------
 # Color Hallucination Corrections — Post-process VLM output to fix common errors
 # ---------------------------------------------------------------------------
@@ -344,15 +362,34 @@ class VLMService:
             if "satin" in description:
                 material_tr = "Saten"
 
-            # Fit / model
+            # Neckline / yaka and sleeve — parse from description (high precision)
+            yaka_tr = ""
+            for kw, tr in YAKA_KEYWORDS:
+                if kw in description:
+                    yaka_tr = tr
+                    break
+            # Avoid duplicate Polo Yaka already in item name
+            if yaka_tr and yaka_tr in item_tr:
+                yaka_tr = ""
+
+            kol_tr = ""
+            for kw, tr in SLEEVE_KEYWORDS:
+                if kw in description:
+                    kol_tr = tr
+                    break
+
+            # Fit / model — deprioritize generic Dar when yaka is more distinctive for tops
             fit_tr = FIT_TRANSLATIONS.get(fit, "")
             if not fit_tr:
                 for key, val in FIT_TRANSLATIONS.items():
                     if key in fit:
                         fit_tr = val
                         break
+            # For upper-body knit tops, neckline matters more than tightness
+            if yaka_tr and fit_tr == "Dar" and item_type in ("sweater", "shirt", "blouse", "t-shirt", "tshirt", "top", "cardigan", "knitwear", "pullover"):
+                fit_tr = ""
 
-            parts = [p for p in [gender_tr, color_tr, material_tr, pattern_tr, fit_tr, item_tr] if p]
+            parts = [p for p in [gender_tr, color_tr, material_tr, yaka_tr, kol_tr, pattern_tr, fit_tr, item_tr] if p]
             query = " ".join(parts)
             if query and query not in queries:
                 queries.append(query)
