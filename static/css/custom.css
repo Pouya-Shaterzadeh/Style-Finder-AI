@@ -1101,6 +1101,29 @@ input, textarea, select, button {
 }
 
 @media (max-width: 768px) {
+    /* Force rows to stack vertically on phones — fixes cramped side-by-side upload/ready */
+    .sf-inner-row,
+    .sf-main-row .gr-row {
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: 1rem !important;
+    }
+    .sf-inner-row > .gr-column,
+    .sf-main-row .gr-column {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+    .sf-upload-col .image-container {
+        height: 300px !important;
+        min-height: 300px !important;
+        max-height: 300px !important;
+    }
+    .sf-examples .gr-examples {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
     /* Header compact */
     .sf-header { padding: 1.75rem 1rem 1.25rem !important; margin-bottom: 1rem !important; }
     .sf-header h1 { font-size: clamp(1.9rem, 8vw, 2.6rem) !important; letter-spacing: 0.02em !important; }

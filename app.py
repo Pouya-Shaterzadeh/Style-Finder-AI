@@ -496,7 +496,7 @@ def create_interface():
 
             # Left: upload + button + analysis panel
             with gr.Column(scale=3, min_width=0):
-                with gr.Row():
+                with gr.Row(elem_classes=["sf-inner-row"]):
                     with gr.Column(scale=1, min_width=0, elem_classes=["sf-upload-col"]):
                         image_input = gr.Image(
                             type="pil",
