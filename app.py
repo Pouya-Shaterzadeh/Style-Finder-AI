@@ -365,12 +365,12 @@ def create_interface():
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
                                 <div class="step-number">2</div>
                                 <div>
-                                    <h4 class="step-title">Qwen 3.6 Vision Analysis</h4>
-                                    <p class="step-description">Qwen 3.6 27B analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
+                                    <h4 class="step-title">Gemini Vision Analysis</h4>
+                                    <p class="step-description">Gemini 2.5 Flash analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM: qwen/qwen3.6-27b</p>
-                                        <p class="info-text">Qwen 3.6 27B — fast image analysis with structured JSON output.</p>
-                                        <p class="info-subtitle">Runs via Groq LPU — free tier, no credit card needed</p>
+                                        <p class="info-title">VLM: gemini-2.5-flash</p>
+                                        <p class="info-text">Gemini 2.5 Flash — fast image analysis with structured JSON output.</p>
+                                        <p class="info-subtitle">Runs via Google AI Studio — free tier, no credit card needed</p>
                                     </div>
                                 </div>
                             </div>
@@ -411,7 +411,7 @@ def create_interface():
         <div class="sf-loading">
             <div class="sf-spinner"></div>
             <div class="sf-loading-text">Analyzing your outfit</div>
-            <div class="sf-loading-sub">Qwen 3.6 Vision is identifying clothing items, colors, and style</div>
+            <div class="sf-loading-sub">Gemini Vision is identifying clothing items, colors, and style</div>
             <div class="sf-loading-bar"></div>
         </div>
         """

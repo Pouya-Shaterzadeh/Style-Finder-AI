@@ -170,7 +170,7 @@ def log_llm_call(
     max_tokens: int = 1024,
 ):
     """
-    Log a single LLM (Groq) call for monitoring and evaluation.
+    Log a single LLM call for monitoring and evaluation.
     """
     record = {
         "event": "llm_call",

@@ -1,9 +1,8 @@
 """
 Vision Language Model Service — Style Finder AI
 
-Uses Qwen 3.6 27B on GroqCloud for fashion image analysis:
-- Free tier: ~14,400 req/day, no credit card required
-- Fast inference via Groq's LPU hardware
+Uses Gemini 2.5 Flash on Google AI Studio for fashion image analysis:
+- Free tier: 1,500 req/day, no credit card required
 - Single structured prompt → {gender, items[], overall_style, occasion}
 - Visual similarity: patrickjohncyh/fashion-clip (separate, in image_processor.py)
 """
@@ -45,7 +44,7 @@ if not logger.handlers:
     logger.addHandler(_ch)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config.config import GROQ_API_KEY, GROQ_MODEL
+from config.config import GOOGLE_API_KEY, GEMINI_MODEL
 
 # ---------------------------------------------------------------------------
 # Turkish Translation Tables
@@ -174,30 +173,32 @@ FASHION_ANALYSIS_PROMPT = FASHION_ANALYSIS["prompt"]
 
 class VLMService:
     """
-    Fashion image analysis using Qwen 3.6 27B on GroqCloud.
+    Fashion image analysis using Gemini 2.5 Flash on Google AI Studio.
 
-    Groq runs inference on its LPU hardware — no local GPU needed.
-    Free tier: ~14,400 req/day, 30 RPM.
-    Get a free API key at: https://console.groq.com
+    Free tier: 1,500 req/day, no credit card required.
+    Get a free API key at: https://aistudio.google.com/apikey
     """
 
     def __init__(self):
         self.client = None
-        self._setup_groq()
+        self._setup_client()
 
-    def _setup_groq(self):
-        """Initialize the Groq client."""
-        if not GROQ_API_KEY:
-            logger.error("GROQ_API_KEY is not set. Add it to .env or HF Spaces Secrets.")
+    def _setup_client(self):
+        """Initialize the OpenAI-compatible client for Google AI Studio."""
+        if not GOOGLE_API_KEY:
+            logger.error("GOOGLE_API_KEY is not set. Add it to .env or HF Spaces Secrets.")
             return
         try:
-            from groq import Groq
-            self.client = Groq(api_key=GROQ_API_KEY)
-            logger.info(f"✅ Groq client initialized: {GROQ_MODEL}")
+            from openai import OpenAI
+            self.client = OpenAI(
+                api_key=GOOGLE_API_KEY,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
+            logger.info(f"✅ Google AI Studio client initialized: {GEMINI_MODEL}")
         except ImportError:
-            logger.error("groq not installed. Run: pip install groq")
+            logger.error("openai not installed. Run: pip install openai")
         except Exception as e:
-            logger.error(f"Failed to initialize Groq: {e}")
+            logger.error(f"Failed to initialize Google AI Studio client: {e}")
 
     # ------------------------------------------------------------------
     # Public API
@@ -205,29 +206,29 @@ class VLMService:
 
     def analyze_fashion_image(self, image: Image.Image) -> Dict:
         """
-        Analyze a fashion image with Qwen 3.6 27B on GroqCloud.
+        Analyze a fashion image with Gemini 2.5 Flash on Google AI Studio.
         Returns structured dict: {gender, items[], overall_style, occasion, stylist_notes[]}
         """
         if self.client is None:
             return self._empty_result(
-                "Groq API not configured. Set GROQ_API_KEY in environment."
+                "Google AI Studio not configured. Set GOOGLE_API_KEY in environment."
             )
 
         image_bytes = self._pil_to_jpeg_bytes(image)
 
         # Attempt 1
-        raw = self._call_groq(image_bytes, attempt=1)
+        raw = self._call_api(image_bytes, attempt=1)
 
         # On rate-limit (429) retry after 60 s
         if raw is None:
-            logger.warning("Groq call failed — retrying in 60 s...")
+            logger.warning("API call failed — retrying in 60 s...")
             time.sleep(60)
-            raw = self._call_groq(image_bytes, attempt=2)
+            raw = self._call_api(image_bytes, attempt=2)
 
         if raw is None:
             return self._empty_result(
-                "Groq API unavailable after retries. "
-                "Check your GROQ_API_KEY or try again shortly."
+                "API unavailable after retries. "
+                "Check your GOOGLE_API_KEY or try again shortly."
             )
 
         fashion_data = self._parse_vlm_json(raw)
@@ -305,30 +306,22 @@ class VLMService:
         image.save(buf, format="JPEG", quality=90)
         return buf.getvalue()
 
-    def _call_groq(self, image_bytes: bytes, attempt: int = 1) -> Optional[str]:
+    def _call_api(self, image_bytes: bytes, attempt: int = 1) -> Optional[str]:
         """
-        Call Qwen 3.6 27B via the Groq API with the image and fashion prompt.
+        Call Gemini 2.5 Flash via Google AI Studio with the image and fashion prompt.
         Image is sent as a base64-encoded data URI.
         Returns raw response text or None on failure.
         """
         import base64
         try:
-            logger.info(f"Calling Groq (attempt {attempt}): {GROQ_MODEL}")
+            logger.info(f"Calling Google AI Studio (attempt {attempt}): {GEMINI_MODEL}")
 
             image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
             start = time.monotonic()
             response = self.client.chat.completions.create(
-                model=GROQ_MODEL,
+                model=GEMINI_MODEL,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a fashion analysis API. "
-                            "Do NOT show your thinking process. "
-                            "Output ONLY a valid JSON object — no markdown, no explanation, no <think> tags."
-                        ),
-                    },
                     {
                         "role": "user",
                         "content": [
@@ -346,23 +339,23 @@ class VLMService:
                     }
                 ],
                 temperature=0.1,
-                max_tokens=800,
+                max_tokens=1024,
             )
 
             latency_ms = int((time.monotonic() - start) * 1000)
             text = response.choices[0].message.content
-            logger.debug(f"Groq raw response: {text[:300]}...")
+            logger.debug(f"Gemini raw response: {text[:300]}...")
 
             # Log to LangSmith
             log_llm_call(
                 prompt_name="fashion_analysis",
                 prompt_version=PROMPT_VERSION,
-                model=GROQ_MODEL,
+                model=GEMINI_MODEL,
                 image_bytes=image_bytes,
                 response_text=text,
                 latency_ms=latency_ms,
                 temperature=0.1,
-                max_tokens=800,
+                max_tokens=1024,
             )
 
             return text
@@ -370,18 +363,18 @@ class VLMService:
         except Exception as e:
             err = repr(e)
             logger.error(
-                f"Groq call failed (attempt {attempt}): "
+                f"API call failed (attempt {attempt}): "
                 f"type={type(e).__name__} | {err[:300]}"
             )
             return None
 
     def _parse_vlm_json(self, raw_text: str) -> Dict:
         """
-        Parse JSON from Groq response.
+        Parse JSON from API response.
         Handles markdown fences and extracts the first JSON object found.
         """
         if not raw_text:
-            return self._empty_result("Empty response from Groq")
+            return self._empty_result("Empty response from API")
 
         text = raw_text.strip()
 
@@ -405,7 +398,7 @@ class VLMService:
             logger.error(f"JSON parse failed: {e}\nRaw: {text[:500]}")
             data = self._recover_partial_json(text)
             if not data:
-                return self._empty_result(f"Invalid JSON from Groq: {str(e)[:100]}")
+                return self._empty_result(f"Invalid JSON from API: {str(e)[:100]}")
 
         return self._normalize_fashion_data(data)
 

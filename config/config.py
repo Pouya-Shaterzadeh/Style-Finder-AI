@@ -15,17 +15,17 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# VLM — Qwen 3.6 27B on GroqCloud — vision-capable model
-# Free tier: no credit card required
-# Get a free key at: https://console.groq.com
+# VLM — Gemini 2.5 Flash on Google AI Studio — vision-capable model
+# Free tier: 1,500 req/day, no credit card required
+# Get a free key at: https://aistudio.google.com/apikey
 # ---------------------------------------------------------------------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = "qwen/qwen3.6-27b"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+GEMINI_MODEL   = "gemini-2.5-flash"
 
-if GROQ_API_KEY:
-    print(f"✓ Groq API key loaded (starts with: {GROQ_API_KEY[:8]}...)")
+if GOOGLE_API_KEY:
+    print(f"✓ Google API key loaded (starts with: {GOOGLE_API_KEY[:8]}...)")
 else:
-    print("⚠️  GROQ_API_KEY not set — fashion analysis will not work.")
+    print("⚠️  GOOGLE_API_KEY not set — fashion analysis will not work.")
 
 # ---------------------------------------------------------------------------
 # Visual Similarity — patrickjohncyh/fashion-clip

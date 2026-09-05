@@ -69,8 +69,8 @@ class FashionAnalyzer:
                 # Step 1: Preprocess image
                 processed_image = self.image_processor.preprocess_image(image)
 
-                # Step 2: Analyze fashion with Qwen 3.6 Vision
-                print("Analyzing fashion image with Qwen 3.6 Vision...")
+                # Step 2: Analyze fashion with Gemini Vision
+                print("Analyzing fashion image with Gemini Vision...")
                 vlm_start = time.monotonic()
                 fashion_data = self.vlm_service.analyze_fashion_image(processed_image)
                 vlm_latency = int((time.monotonic() - vlm_start) * 1000)

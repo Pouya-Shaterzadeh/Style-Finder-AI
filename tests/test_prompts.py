@@ -70,8 +70,8 @@ class TestGetPrompt:
 
 
 class TestPromptModelConfig:
-    def test_fashion_analysis_uses_groq(self):
-        assert FASHION_ANALYSIS["provider"] == "groq"
+    def test_fashion_analysis_uses_google(self):
+        assert FASHION_ANALYSIS["provider"] == "google"
 
     def test_fashion_analysis_model_name(self):
         assert "llama" in FASHION_ANALYSIS["model"].lower()
