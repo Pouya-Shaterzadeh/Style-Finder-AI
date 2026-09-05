@@ -19,7 +19,7 @@ Upload a fashion photo → get AI analysis + matching products from Trendyol.
 ## How It Works
 
 1. **Upload** a clear fashion photo (outfit, street style, lookbook, etc.)
-2. **Gemini 2.5 Flash** analyzes the image — detects clothing items, colors, patterns, materials, fit, gender, and overall style. Returns structured JSON in a single API call.
+2. **Gemini 3.6 Flash** analyzes the image — detects clothing items, colors, patterns, materials, fit, gender, and overall style. Returns structured JSON in a single API call.
 3. **Turkish search queries** are generated from the analysis (e.g. "Kadın Lacivert Slim Jean")
 4. **Trendyol's internal JSON API** is queried — real listings with prices, images, and product pages
 5. **fashion-CLIP** (trained on 800K+ fashion image-text pairs) scores each result by text-image cosine similarity
@@ -29,7 +29,7 @@ Upload a fashion photo → get AI analysis + matching products from Trendyol.
 
 | Layer | Model / Tool |
 |---|---|
-| Vision Language Model | Gemini 2.5 Flash (gemini-2.5-flash) |
+| Vision Language Model | Gemini 3.6 Flash (gemini-3.6-flash) |
 | Fashion Similarity | patrickjohncyh/fashion-clip |
 | Product Search | Trendyol Internal JSON API |
 | UI Framework | Gradio 6 |

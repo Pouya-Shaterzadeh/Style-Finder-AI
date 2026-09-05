@@ -366,10 +366,10 @@ def create_interface():
                                 <div class="step-number">2</div>
                                 <div>
                                     <h4 class="step-title">Gemini Vision Analysis</h4>
-                                    <p class="step-description">Gemini 2.5 Flash analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
+                                    <p class="step-description">Gemini 3.6 Flash analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM: gemini-2.5-flash</p>
-                                        <p class="info-text">Gemini 2.5 Flash — fast image analysis with structured JSON output.</p>
+                                        <p class="info-title">VLM: gemini-3.6-flash</p>
+                                        <p class="info-text">Gemini 3.6 Flash — fast image analysis with structured JSON output.</p>
                                         <p class="info-subtitle">Runs via Google AI Studio — free tier, no credit card needed</p>
                                     </div>
                                 </div>

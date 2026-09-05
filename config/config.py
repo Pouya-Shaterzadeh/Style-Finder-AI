@@ -20,7 +20,7 @@ except ImportError:
 # Get a free key at: https://aistudio.google.com/apikey
 # ---------------------------------------------------------------------------
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GEMINI_MODEL   = "gemini-2.5-flash"
+GEMINI_MODEL   = "gemini-3.6-flash"
 
 if GOOGLE_API_KEY:
     print(f"✓ Google API key loaded (starts with: {GOOGLE_API_KEY[:8]}...)")
