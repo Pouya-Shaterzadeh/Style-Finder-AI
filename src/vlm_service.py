@@ -1,7 +1,7 @@
 """
 Vision Language Model Service — Style Finder AI
 
-Uses Llama 3.2 11B Vision on GroqCloud for fashion image analysis:
+Uses Qwen 3.6 27B on GroqCloud for fashion image analysis:
 - Free tier: ~14,400 req/day, no credit card required
 - Fast inference via Groq's LPU hardware
 - Single structured prompt → {gender, items[], overall_style, occasion}
@@ -174,7 +174,7 @@ FASHION_ANALYSIS_PROMPT = FASHION_ANALYSIS["prompt"]
 
 class VLMService:
     """
-    Fashion image analysis using Llama 3.2 11B Vision on GroqCloud.
+    Fashion image analysis using Qwen 3.6 27B on GroqCloud.
 
     Groq runs inference on its LPU hardware — no local GPU needed.
     Free tier: ~14,400 req/day, 30 RPM.
@@ -205,7 +205,7 @@ class VLMService:
 
     def analyze_fashion_image(self, image: Image.Image) -> Dict:
         """
-        Analyze a fashion image with Llama 3.2 11B Vision on GroqCloud.
+        Analyze a fashion image with Qwen 3.6 27B on GroqCloud.
         Returns structured dict: {gender, items[], overall_style, occasion, stylist_notes[]}
         """
         if self.client is None:
@@ -307,7 +307,7 @@ class VLMService:
 
     def _call_groq(self, image_bytes: bytes, attempt: int = 1) -> Optional[str]:
         """
-        Call Llama 3.2 11B Vision via the Groq API with the image and fashion prompt.
+        Call Qwen 3.6 27B via the Groq API with the image and fashion prompt.
         Image is sent as a base64-encoded data URI.
         Returns raw response text or None on failure.
         """

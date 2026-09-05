@@ -365,11 +365,11 @@ def create_interface():
                             <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:1.5rem;">
                                 <div class="step-number">2</div>
                                 <div>
-                                    <h4 class="step-title">Llama 3.2 Vision Analysis</h4>
-                                    <p class="step-description">Llama 3.2 11B Vision analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
+                                    <h4 class="step-title">Qwen 3.6 Vision Analysis</h4>
+                                    <p class="step-description">Qwen 3.6 27B analyzes the image and returns structured fashion data: item types, colors, patterns, materials, fit, and gender — in a single API call.</p>
                                     <div class="info-box">
-                                        <p class="info-title">VLM: llama-3.2-11b-vision-preview</p>
-                                        <p class="info-text">Llama 3.2 11B Vision — fast image analysis with structured JSON output.</p>
+                                        <p class="info-title">VLM: qwen/qwen3.6-27b</p>
+                                        <p class="info-text">Qwen 3.6 27B — fast image analysis with structured JSON output.</p>
                                         <p class="info-subtitle">Runs via Groq LPU — free tier, no credit card needed</p>
                                     </div>
                                 </div>
@@ -411,7 +411,7 @@ def create_interface():
         <div class="sf-loading">
             <div class="sf-spinner"></div>
             <div class="sf-loading-text">Analyzing your outfit</div>
-            <div class="sf-loading-sub">Llama 3.2 Vision is identifying clothing items, colors, and style</div>
+            <div class="sf-loading-sub">Qwen 3.6 Vision is identifying clothing items, colors, and style</div>
             <div class="sf-loading-bar"></div>
         </div>
         """

@@ -40,7 +40,7 @@ RULE: If you cannot confidently distinguish black from navy from dark gray → d
 FASHION_ANALYSIS = {
     "version": VERSION,
     "name": "fashion_analysis",
-    "model": "llama-3.2-11b-vision-preview",
+    "model": "qwen/qwen3.6-27b",
     "provider": "groq",
     "temperature": 0.1,
     "max_tokens": 1024,
