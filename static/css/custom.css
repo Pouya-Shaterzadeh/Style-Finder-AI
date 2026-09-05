@@ -213,6 +213,33 @@ button[aria-dropeffect="copy"]:hover {
     letter-spacing: 0.12em !important;
     color: var(--c-text-dim) !important;
 }
+/* Gradio 6 gallery structure: button.gallery-item > div.container.gallery > img */
+.sf-examples .gallery-item,
+.sf-examples button.gallery-item {
+    padding: 0 !important;
+    border-radius: var(--r-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--c-border) !important;
+    background: var(--c-surface) !important;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease !important;
+    aspect-ratio: 3 / 4 !important;
+    height: auto !important;
+}
+.sf-examples .gallery-item .container,
+.sf-examples button.gallery-item .container,
+.sf-examples .gallery-item div.gallery,
+.sf-examples .container.gallery {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
 .sf-examples .thumbnail-item,
 .sf-examples [data-testid="example"] {
     border-radius: var(--r-md) !important;
@@ -220,14 +247,27 @@ button[aria-dropeffect="copy"]:hover {
     border: 1px solid var(--c-border) !important;
     transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease !important;
 }
+.sf-examples .gallery-item:hover,
+.sf-examples button.gallery-item:hover,
 .sf-examples .thumbnail-item:hover,
 .sf-examples [data-testid="example"]:hover {
     border-color: var(--c-accent) !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,169,110,0.15) !important;
 }
-.sf-examples img {
+.sf-examples img,
+.sf-examples img.svelte-1jk6tax,
+.sf-examples .gallery img,
+.sf-examples button.gallery-item img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
     object-fit: cover !important;
+    object-position: top center !important;
+    display: block !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
 }
 
 label span,
