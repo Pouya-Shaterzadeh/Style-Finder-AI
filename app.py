@@ -166,13 +166,13 @@ def _render_item_chips(fashion_data: dict) -> str:
 
     return f"""
     <div class="sf-ob-carousel">
-        <div class="sf-ob-track" id="sf-ob-track">
+        <div class="sf-ob-track" id="sf-ob-track" onscroll="window.sfSyncOb && window.sfSyncOb()">
             {"".join(cards)}
         </div>
         <div class="sf-ob-controls">
-            <button class="sf-ob-nav prev" aria-label="Previous" onclick="document.getElementById('sf-ob-track').scrollBy({{left:-288,behavior:'smooth'}})">‹</button>
+            <button class="sf-ob-nav prev" aria-label="Previous" onclick="window.sfObPrev && window.sfObPrev()">‹</button>
             <div class="sf-ob-dots">{dots}</div>
-            <button class="sf-ob-nav next" aria-label="Next" onclick="document.getElementById('sf-ob-track').scrollBy({{left:288,behavior:'smooth'}})">›</button>
+            <button class="sf-ob-nav next" aria-label="Next" onclick="window.sfObNext && window.sfObNext()">›</button>
         </div>
     </div>
     """
@@ -209,20 +209,19 @@ def _render_stylist_slides(tips: list) -> str:
         """)
 
     dots = "".join(
-        f'<span class="sf-sn-dot{" active" if i==0 else ""}" data-idx="{i}" onclick="document.getElementById(\'sf-sn-track\').scrollTo({{left:{i}*336,behavior:\'smooth\'}})"></span>'
+        f'<span class="sf-sn-dot{" active" if i==0 else ""}" data-idx="{i}"></span>'
         for i in range(len(slides))
     )
-    total = len(slides)
 
     return f"""
     <div class="sf-sn-deck">
-        <div class="sf-sn-track" id="sf-sn-track">
+        <div class="sf-sn-track" id="sf-sn-track" onscroll="window.sfSyncSn && window.sfSyncSn()">
             {"".join(slides)}
         </div>
         <div class="sf-sn-controls">
-            <button class="sf-sn-nav prev" aria-label="Previous" onclick="document.getElementById('sf-sn-track').scrollBy({{left:-336,behavior:'smooth'}})">‹</button>
+            <button class="sf-sn-nav prev" aria-label="Previous" onclick="window.sfSnPrev && window.sfSnPrev()">‹</button>
             <div class="sf-sn-dots">{dots}</div>
-            <button class="sf-sn-nav next" aria-label="Next" onclick="document.getElementById('sf-sn-track').scrollBy({{left:336,behavior:'smooth'}})">›</button>
+            <button class="sf-sn-nav next" aria-label="Next" onclick="window.sfSnNext && window.sfSnNext()">›</button>
         </div>
     </div>
     """
@@ -413,10 +412,73 @@ def analyze_fashion_image(image: Optional[Image.Image]) -> Tuple[str, str]:
 # Gradio interface
 # ---------------------------------------------------------------------------
 
+_CAROUSEL_JS = r"""
+<script>
+(function(){
+  function syncOb(){
+    const track = document.getElementById('sf-ob-track');
+    if(!track) return;
+    const dots = track.parentElement.querySelectorAll('.sf-ob-dot');
+    if(!dots.length) return;
+    const card = track.querySelector('.sf-ob-card');
+    const gap = 14;
+    const step = card ? card.offsetWidth + gap : 286;
+    const idx = Math.round(track.scrollLeft / step);
+    dots.forEach((d,i)=> d.classList.toggle('active', i===idx));
+  }
+  function syncSn(){
+    const track = document.getElementById('sf-sn-track');
+    if(!track) return;
+    const dots = track.parentElement.querySelectorAll('.sf-sn-dot');
+    if(!dots.length) return;
+    // each slide is 100% of track width
+    const step = track.clientWidth + 14;
+    const idx = Math.round(track.scrollLeft / step);
+    dots.forEach((d,i)=> d.classList.toggle('active', i===idx));
+  }
+  window.sfSyncOb = syncOb;
+  window.sfSyncSn = syncSn;
+  window.sfObPrev = ()=>{ const t=document.getElementById('sf-ob-track'); if(t){ const c=t.querySelector('.sf-ob-card'); const s=c?c.offsetWidth+14:288; t.scrollBy({left:-s,behavior:'smooth'});} };
+  window.sfObNext = ()=>{ const t=document.getElementById('sf-ob-track'); if(t){ const c=t.querySelector('.sf-ob-card'); const s=c?c.offsetWidth+14:288; t.scrollBy({left:s,behavior:'smooth'});} };
+  window.sfSnPrev = ()=>{ const t=document.getElementById('sf-sn-track'); if(t) t.scrollBy({left:-(t.clientWidth+14),behavior:'smooth'}); };
+  window.sfSnNext = ()=>{ const t=document.getElementById('sf-sn-track'); if(t) t.scrollBy({left:(t.clientWidth+14),behavior:'smooth'}); };
+  function attach(){
+    const ob = document.getElementById('sf-ob-track');
+    const sn = document.getElementById('sf-sn-track');
+    if(ob && !ob.dataset.bound){ ob.addEventListener('scroll', syncOb, {passive:true}); ob.dataset.bound='1'; }
+    if(sn && !sn.dataset.bound){ sn.addEventListener('scroll', syncSn, {passive:true}); sn.dataset.bound='1'; }
+    // dot click handlers
+    document.querySelectorAll('.sf-ob-dot').forEach((d,i)=>{
+      if(d.dataset.bound) return;
+      d.addEventListener('click', ()=>{
+        const track=document.getElementById('sf-ob-track'); const card=track.querySelector('.sf-ob-card'); const step=card?card.offsetWidth+14:286;
+        track.scrollTo({left:i*step,behavior:'smooth'});
+      });
+      d.dataset.bound='1';
+    });
+    document.querySelectorAll('.sf-sn-dot').forEach((d,i)=>{
+      if(d.dataset.bound) return;
+      d.addEventListener('click', ()=>{
+        const track=document.getElementById('sf-sn-track'); const step=track.clientWidth+14;
+        track.scrollTo({left:i*step,behavior:'smooth'});
+      });
+      d.dataset.bound='1';
+    });
+  }
+  // run on load and on mutations (results are injected dynamically)
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', attach);
+  else attach();
+  const mo = new MutationObserver(attach);
+  mo.observe(document.body, {childList:true, subtree:true});
+  setInterval(attach, 800);
+})();
+</script>
+"""
+
 def create_interface():
     """Create and configure the Gradio interface."""
 
-    with gr.Blocks(title="Style Finder AI - Fashion Analysis") as demo:
+    with gr.Blocks(title="Style Finder AI - Fashion Analysis", head=_CAROUSEL_JS) as demo:
 
         # ── Header ────────────────────────────────────────────────────────
         gr.HTML("""
@@ -503,7 +565,9 @@ def create_interface():
                                 <div>
                                     <h4 class="step-title">Trendyol Search Links</h4>
                                     <p class="step-description">Generates direct Trendyol search URLs so you can browse real listings with accurate prices, brands, and availability.</p>
-                            <div class="step-item" style="display:flex;align-items:start;gap:1rem;">
+                                </div>
+                            </div>
+                            <div class="step-item" style="display:flex;align-items:start;gap:1rem;margin-bottom:0;">
                                 <div class="step-number">5</div>
                                 <div>
                                     <h4 class="step-title">Shop on Trendyol</h4>

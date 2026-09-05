@@ -570,8 +570,9 @@ label span,
 .sf-ob-track::-webkit-scrollbar { display: none; }
 
 .sf-ob-card {
-    flex: 0 0 272px;
+    flex: 0 0 calc(100% - 14px);
     scroll-snap-align: start;
+    scroll-snap-stop: always;
     background: linear-gradient(165deg, var(--c-surface-elev) 0%, var(--c-surface) 100%);
     border: 1px solid var(--c-border);
     border-radius: var(--r-lg);
@@ -579,6 +580,10 @@ label span,
     position: relative;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    box-sizing: border-box;
+    min-height: 148px;
+    display: flex;
+    flex-direction: column;
 }
 .sf-ob-card::before {
     content: '';
@@ -1016,7 +1021,7 @@ label span,
     .sf-card-body { padding: 0.65rem; }
     .sf-card-name { font-size: 0.8rem; }
     .sf-card-price { font-size: 0.9rem; }
-    .sf-ob-card { flex: 0 0 240px; }
+    .sf-ob-card { flex: 0 0 calc(100% - 12px); min-height: 150px; }
     .sf-sn-slide { min-height: 160px; }
     .sf-results-grid { flex-direction: column; gap: 1.5rem; }
     .sf-analysis-panel { max-width: 100%; }
