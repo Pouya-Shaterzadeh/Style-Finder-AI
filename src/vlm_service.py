@@ -338,7 +338,7 @@ class VLMService:
                     }
                 ],
                 temperature=0.1,
-                max_tokens=1024,
+                max_tokens=800,
             )
 
             latency_ms = int((time.monotonic() - start) * 1000)
@@ -354,7 +354,7 @@ class VLMService:
                 response_text=text,
                 latency_ms=latency_ms,
                 temperature=0.1,
-                max_tokens=1024,
+                max_tokens=800,
             )
 
             return text
